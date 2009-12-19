@@ -21,8 +21,7 @@ get %r{/(.+)} do |inchi| # catches all remaining get requests
 		uri = File.join CACTUS_URI,inchi,"names"
 		RestClient.get(uri).to_s
 	else
-		status 400
-		"Unsupported MIME type '#{request.content_type}'"
+		halt 400, "Unsupported MIME type '#{request.env['HTTP_ACCEPT']}'"
 	end
 end
 
