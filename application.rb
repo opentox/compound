@@ -2,6 +2,7 @@ require 'rubygems'
 gem 'opentox-ruby-api-wrapper', '~>1.2'
 require 'opentox-ruby-api-wrapper'
 
+set :lock, true
 CACTUS_URI="http://cactus.nci.nih.gov/chemical/structure/"
 
 get %r{/(.+)} do |inchi| # catches all remaining get requests
