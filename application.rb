@@ -17,7 +17,8 @@ get %r{/(.+)} do |inchi| # catches all remaining get requests
 	when "chemical/x-mdl-sdfile"
 		OpenTox::Compound.new(:inchi => inchi).sdf
 	when "image/gif"
-		"#{CACTUS_URI}#{inchi}/image" 
+		OpenTox::Compound.new(:inchi => inchi).image
+		#"#{CACTUS_URI}#{inchi}/image" 
 	when "text/plain"
 		uri = File.join CACTUS_URI,inchi,"names"
 		RestClient.get(uri).to_s
