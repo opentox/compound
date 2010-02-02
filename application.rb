@@ -1,5 +1,5 @@
 require 'rubygems'
-gem 'opentox-ruby-api-wrapper', '=1.2.6'
+gem 'opentox-ruby-api-wrapper', '= 1.2.7'
 require 'opentox-ruby-api-wrapper'
 
 set :lock, true
