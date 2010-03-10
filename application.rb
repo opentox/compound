@@ -27,7 +27,7 @@ get %r{/(.+)} do |inchi| # catches all remaining get requests
 	when "text/plain"
 		response['Content-Type'] = "text/plain"
 		uri = File.join CACTUS_URI,inchi,"names"
-		RestClient.get(uri).to_s
+		RestClient.get(uri).to_s 
 	else
 		halt 400, "Unsupported MIME type '#{request.env['HTTP_ACCEPT']}'"
 	end
@@ -39,13 +39,13 @@ post '/?' do
 	response['Content-Type'] = 'text/uri-list'
 	case request.content_type
 	when /chemical\/x-daylight-smiles/
-		OpenTox::Compound.new(:smiles => input).uri
+		OpenTox::Compound.new(:smiles => input).uri + "\n"
 	when /chemical\/x-inchi/
-		OpenTox::Compound.new(:inchi => input).uri
+		OpenTox::Compound.new(:inchi => input).uri + "\n"
 	when /chemical\/x-mdl-sdfile|chemical\/x-mdl-molfile/
-		OpenTox::Compound.new(:sdf => input).uri
+		OpenTox::Compound.new(:sdf => input).uri + "\n"
 	when /text\/plain/
-		OpenTox::Compound.new(:name => input).uri
+		OpenTox::Compound.new(:name => input).uri + "\n"
 	else
 		status 400
 		"Unsupported MIME type '#{request.content_type}'"
