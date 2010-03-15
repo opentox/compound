@@ -6,7 +6,7 @@ set :lock, true
 CACTUS_URI="http://cactus.nci.nih.gov/chemical/structure/"
 
 get %r{/(.+)} do |inchi| # catches all remaining get requests
-	inchi = URI.unescape request.env['REQUEST_URI'].sub(/^\//,'').sub(/.*\/compound\//,'') # hack to avoid sinatra's URI/CGI unescaping, splitting, ..."
+	inchi = URI.unescape request.env['REQUEST_URI'].sub(/^\//,'').sub(/.*compound\//,'') # hack to avoid sinatra's URI/CGI unescaping, splitting, ..."
 	case request.env['HTTP_ACCEPT']
 	when "*/*"
 		response['Content-Type'] = "chemical/x-daylight-smiles"
