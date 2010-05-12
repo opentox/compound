@@ -27,7 +27,7 @@ get %r{/(.+)} do |inchi| # catches all remaining get requests
 	when "text/plain"
 		response['Content-Type'] = "text/plain"
 		uri = File.join CACTUS_URI,inchi,"names"
-		RestClient.get(uri).to_s 
+		RestClient.get(uri).body
 	else
 		halt 400, "Unsupported MIME type '#{request.env['HTTP_ACCEPT']}'"
 	end
