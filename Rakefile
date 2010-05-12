@@ -3,7 +3,7 @@ require 'rake'
 require 'opentox-ruby-api-wrapper'
 require 'tasks/opentox'
 
-@gems = "sinatra rest-client sinatra-url-for sinatra-respond_to"
+@gems = "sinatra rest-client emk-sinatra-url-for sinatra-respond_to"
 
 namespace :openbabel do
 	desc "Install openbabel"
