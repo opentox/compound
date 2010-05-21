@@ -23,7 +23,6 @@ get %r{/(.+)} do |inchi| # catches all remaining get requests
 	when "image/gif"
 		response['Content-Type'] = "image/gif"
 		OpenTox::Compound.new(:inchi => inchi).image
-		#"#{CACTUS_URI}#{inchi}/image" 
 	when "text/plain"
 		response['Content-Type'] = "text/plain"
 		uri = File.join CACTUS_URI,inchi,"names"
@@ -37,17 +36,22 @@ post '/?' do
 
 	input =	request.env["rack.input"].read
 	response['Content-Type'] = 'text/uri-list'
-	case request.content_type
-	when /chemical\/x-daylight-smiles/
-		OpenTox::Compound.new(:smiles => input).uri + "\n"
-	when /chemical\/x-inchi/
-		OpenTox::Compound.new(:inchi => input).uri + "\n"
-	when /chemical\/x-mdl-sdfile|chemical\/x-mdl-molfile/
-		OpenTox::Compound.new(:sdf => input).uri + "\n"
-	when /text\/plain/
-		OpenTox::Compound.new(:name => input).uri + "\n"
-	else
+	begin
+		case request.content_type
+		when /chemical\/x-daylight-smiles/
+			OpenTox::Compound.new(:smiles => input).uri + "\n"
+		when /chemical\/x-inchi/
+			OpenTox::Compound.new(:inchi => input).uri + "\n"
+		when /chemical\/x-mdl-sdfile|chemical\/x-mdl-molfile/
+			OpenTox::Compound.new(:sdf => input).uri + "\n"
+		when /text\/plain/
+			OpenTox::Compound.new(:name => input).uri + "\n"
+		else
+			status 400
+			"Unsupported MIME type '#{request.content_type}'"
+		end
+	rescue
 		status 400
-		"Unsupported MIME type '#{request.content_type}'"
+		"Cannot process request '#{input}' for content type '#{request.content_type}'"
 	end
 end
