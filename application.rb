@@ -22,7 +22,10 @@ get %r{/(.+)} do |inchi| # catches all remaining get requests
 		OpenTox::Compound.new(:inchi => inchi).sdf
 	when "image/gif"
 		response['Content-Type'] = "image/gif"
-		OpenTox::Compound.new(:inchi => inchi).image
+		OpenTox::Compound.new(:inchi => inchi).gif
+	when "image/png"
+		response['Content-Type'] = "image/png"
+		OpenTox::Compound.new(:inchi => inchi).png
 	when "text/plain"
 		response['Content-Type'] = "text/plain"
 		uri = File.join CACTUS_URI,inchi,"names"
