@@ -1,12 +1,14 @@
 # Java environment
+=begin
 ENV["JAVA_HOME"] = "/usr/lib/jvm/java-6-sun" unless ENV["JAVA_HOME"]
 java_dir = File.join File.expand_path(File.dirname(__FILE__)),"public/java"
 cdk = File.join java_dir, "cdk-1.3.5.jar"
 jchempaint = File.join java_dir, "cdk-jchempaint-15.jar"
 ENV["CLASSPATH"] = "#{ENV["CLASSPATH"]}:#{java_dir}:#{cdk}:#{jchempaint}"
+=end
 
 require 'rubygems'
-require 'rjb'
+#require 'rjb'
 gem "opentox-ruby-api-wrapper", "= 1.6.0"
 require 'opentox-ruby-api-wrapper'
 
