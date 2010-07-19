@@ -56,7 +56,7 @@ public class Display{
 		drawArea = new Rectangle(size, size);
 		image = new BufferedImage(size, size , BufferedImage.TYPE_INT_RGB);
 		g2 = (Graphics2D)image.getGraphics();
-		g2.setColor(Color.yellow);
+		g2.setColor(Color.WHITE);
 		g2.fillRect(0, 0, size, size);
 	}
 
@@ -69,14 +69,13 @@ public class Display{
 				sdg.generateCoordinates();
 				mol = sdg.getMolecule();
 				GeometryTools.translateAllPositive(mol);
-				
 				// get size of previous mol and shift
 				last = GeometryTools.shiftContainer(mol, GeometryTools.getRectangle2D(mol), last,2);
 				coordinated_mols[i] = (IMolecule) mol;
 			}
 			moleculeSet.setMolecules(coordinated_mols);
 			renderer.paintMoleculeSet(moleculeSet, new AWTDrawVisitor(g2), drawArea, true);
-			//matchSmarts("NN",Color.green);
+			matchSmarts("NN",Color.green);
 			ImageIO.write(image, "png", out);
 		} catch (Exception ex) {
 				ex.printStackTrace();
