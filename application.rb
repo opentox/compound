@@ -1,9 +1,25 @@
+# Java environment
+ENV["JAVA_HOME"] = "/usr/lib/jvm/java-6-sun" unless ENV["JAVA_HOME"]
+java_dir = File.join File.expand_path(File.dirname(__FILE__)),"public/java"
+cdk = File.join java_dir, "cdk-1.3.5.jar"
+jchempaint = File.join java_dir, "cdk-jchempaint-15.jar"
+ENV["CLASSPATH"] = "#{ENV["CLASSPATH"]}:#{java_dir}:#{cdk}:#{jchempaint}"
+
 require 'rubygems'
+require 'rjb'
 gem "opentox-ruby-api-wrapper", "= 1.5.7"
 require 'opentox-ruby-api-wrapper'
 
-set :lock, true
-CACTUS_URI="http://cactus.nci.nih.gov/chemical/structure/"
+#set :lock, true
+
+get %r{/(.+)/image} do |inchi| # catches all remaining get requests
+
+		smiles = OpenTox::Compound.new(:inchi => inchi).smiles
+		content_type "image/png"
+		attachment "#{smiles}.png"
+    Rjb::import('Display').new(smiles,600).image
+
+end
 
 get %r{/(.+)} do |inchi| # catches all remaining get requests
 	inchi = URI.unescape request.env['REQUEST_URI'].sub(/^\//,'').sub(/.*compound\//,'') # hack to avoid sinatra's URI/CGI unescaping, splitting, ..."
@@ -28,7 +44,7 @@ get %r{/(.+)} do |inchi| # catches all remaining get requests
 		OpenTox::Compound.new(:inchi => inchi).png
 	when "text/plain"
 		response['Content-Type'] = "text/plain"
-		uri = File.join CACTUS_URI,inchi,"names"
+		uri = File.join @@cactus_uri,inchi,"names"
 		RestClient.get(uri).body
 	else
 		halt 400, "Unsupported MIME type '#{request.env['HTTP_ACCEPT']}'"
