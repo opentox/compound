@@ -1,25 +1,37 @@
 # Java environment
-=begin
 ENV["JAVA_HOME"] = "/usr/lib/jvm/java-6-sun" unless ENV["JAVA_HOME"]
 java_dir = File.join File.expand_path(File.dirname(__FILE__)),"public/java"
 cdk = File.join java_dir, "cdk-1.3.5.jar"
 jchempaint = File.join java_dir, "cdk-jchempaint-15.jar"
 ENV["CLASSPATH"] = "#{ENV["CLASSPATH"]}:#{java_dir}:#{cdk}:#{jchempaint}"
-=end
 
 require 'rubygems'
-#require 'rjb'
+require 'rjb'
 gem "opentox-ruby-api-wrapper", "= 1.6.0"
 require 'opentox-ruby-api-wrapper'
 
-#set :lock, true
+get %r{/smiles/(.+)/smarts/(.*)} do |smiles,smarts| 
+		content_type "image/png"
+		attachment "#{smiles}.png"
+    #LOGGER.debug "SMILES: #{smiles}, SMARTS: #{smarts}"
+    s = Rjb::import('Structure').new(smiles,200)
+    s.match(smarts)
+    s.show
+end
+
+
+get %r{/smiles/(.+)} do |smiles| 
+		content_type "image/png"
+		attachment "#{smiles}.png"
+    Rjb::import('Structure').new(smiles,200).show
+end
 
 get %r{/(.+)/image} do |inchi| # catches all remaining get requests
 
 		smiles = OpenTox::Compound.new(:inchi => inchi).smiles
 		content_type "image/png"
 		attachment "#{smiles}.png"
-    Rjb::import('Display').new(smiles,600).image
+    Rjb::import('Structure').new(smiles,200).show
 
 end
 
