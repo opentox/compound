@@ -25,25 +25,30 @@ import org.openscience.cdk.geometry.*;
 public class Structure{
 
   int size;
-  Rectangle drawArea;
+  List generators = new ArrayList();
+
   IMolecule molecule = new Molecule();
   IMoleculeSet moleculeSet;
   IMolecule[] coordinated_mols;
+
   StructureDiagramGenerator sdg = new StructureDiagramGenerator();
   SmilesParser sp = new SmilesParser(DefaultChemObjectBuilder.getInstance());
-  Vector<Integer> idlist = new Vector<Integer>();
-  List generators = new ArrayList();
   Renderer renderer;
+
   BufferedImage image;
+  Rectangle drawArea;
   Graphics2D g2;
-  MoleculeSet highBSet = new MoleculeSet();
-  ChemModel chemModel = new ChemModel();
+
   LogicalSelection selection = new LogicalSelection(LogicalSelection.Type.ALL);
+  MoleculeSet selectionMoleculeSet = new MoleculeSet();
+  ChemModel selectionChemModel = new ChemModel();
+
   ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-  public Structure (String smiles, int s) {
+  public Structure (String smiles, int imageSize) {
 
-    size = s; 
+    size = imageSize; 
+
     // generators make the image elements
     generators.add(new BasicSceneGenerator());
     generators.add(new RingGenerator());
@@ -52,28 +57,31 @@ public class Structure{
     //generators.add(new AtomNumberGenerator());
     generators.add(new SelectBondGenerator());
     generators.add(new SelectAtomGenerator());
+
     renderer = new Renderer(generators, new AWTFontManager());
+
     try { molecule = sp.parseSmiles(smiles); }
     catch (Exception ex) { ex.printStackTrace(); }
+
     moleculeSet = ConnectivityChecker.partitionIntoMolecules(molecule);
     coordinated_mols = new IMolecule[moleculeSet.getMoleculeCount()];
+
     drawArea = new Rectangle(size, size);
     image = new BufferedImage(size, size , BufferedImage.TYPE_INT_RGB);
+
     g2 = (Graphics2D)image.getGraphics();
     g2.setColor(Color.WHITE);
     g2.fillRect(0, 0, size, size);
+
     layout();
   }
 
   public byte[] show() {
-
     try {
-
       renderer.paintMoleculeSet(moleculeSet, new AWTDrawVisitor(g2), drawArea, true);
-        ImageIO.write(image, "png", out);
-      } catch (Exception ex) {
-          ex.printStackTrace();
+      ImageIO.write(image, "png", out);
     }
+    catch (Exception ex) { ex.printStackTrace(); }
     return out.toByteArray();
   }
 
@@ -86,14 +94,13 @@ public class Structure{
         sdg.generateCoordinates();
         mol = sdg.getMolecule();
         GeometryTools.translateAllPositive(mol);
-        // get size of previous mol and shift
+        // get size of previous mol and shift to the right
         last = GeometryTools.shiftContainer(mol, GeometryTools.getRectangle2D(mol), last,2);
         coordinated_mols[i] = (IMolecule) mol;
       }
       moleculeSet.setMolecules(coordinated_mols);
-    } catch (Exception ex) {
-        ex.printStackTrace();
     }
+    catch (Exception ex) { ex.printStackTrace(); }
   }
 
   public void match_activating(String[] smarts) {
@@ -111,6 +118,7 @@ public class Structure{
   }
 
   public void match(String smarts, Color color) {
+
     try {
       SMARTSQueryTool querytool = new SMARTSQueryTool(smarts);
       // iterate over molecule set
@@ -121,33 +129,37 @@ public class Structure{
         boolean status = querytool.matches(mol);
         if (status) {
           List matches = querytool.getUniqueMatchingAtoms();
-          System.out.print("Matches: ");
-          System.out.println(matches);
+          //System.out.print("Matches: ");
+          //System.out.println(matches);
+          // iterate over all matches
           for (int j = 0; j < matches.size(); j++) {
-            IAtomContainer highB = new AtomContainer();
+            IAtomContainer selectionContainer = new AtomContainer();
             List atomIndices = (List) matches.get(j);
+            // itrate over all atoms
             for (int k = 0; k < atomIndices.size(); k++) {
               IAtom a1 = mol.getAtom( (Integer) atomIndices.get(k));
-              if (!highB.contains(a1)) {  highB.addAtom(a1); }
+              if (!selectionContainer.contains(a1)) {  selectionContainer.addAtom(a1); }
+              // find bonds
               for (int l = k + 1; l < atomIndices.size(); l++) {
                 IAtom a2 = mol.getAtom( (Integer) atomIndices.get(l));
                 IBond bond = mol.getBond(a1,a2);
-                if (bond != null) { highB.addBond(bond); }
+                if (bond != null) { selectionContainer.addBond(bond); }
               }
             }
-            highBSet.addMolecule(new Molecule(highB));
+            // create a fake MoleculeSet to make the LogicalSelection happy
+            selectionMoleculeSet.addMolecule(new Molecule(selectionContainer));
           }
         }
       }
 
-      chemModel.setMoleculeSet(highBSet);
-      selection.select(chemModel);
+      // create a fake ChemModel to make the LogicalSelection happy
+      selectionChemModel.setMoleculeSet(selectionMoleculeSet);
+      selection.select(selectionChemModel);
       renderer.getRenderer2DModel().setSelection(selection);
       renderer.getRenderer2DModel().set( SelectBondGenerator.SelectionBondColor.class,color);
 
-    } catch (Exception exc) {
-        exc.printStackTrace();
     }
+    catch (Exception exc) { exc.printStackTrace(); }
 
   }
 
