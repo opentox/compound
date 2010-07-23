@@ -54,11 +54,11 @@ public class Structure{
     generators.add(new RingGenerator());
     generators.add(new BasicBondGenerator());
     generators.add(new BasicAtomGenerator());
-    //generators.add(new AtomNumberGenerator());
     generators.add(new SelectBondGenerator());
     generators.add(new SelectAtomGenerator());
 
     renderer = new Renderer(generators, new AWTFontManager());
+    renderer.getRenderer2DModel().set( SelectBondGenerator.SelectionBondColor.class,Color.RED);
 
     try { molecule = sp.parseSmiles(smiles); }
     catch (Exception ex) { ex.printStackTrace(); }
@@ -74,10 +74,15 @@ public class Structure{
     g2.fillRect(0, 0, size, size);
 
     layout();
+
   }
 
   public byte[] show() {
     try {
+      // create a fake ChemModel to make the LogicalSelection happy
+      selectionChemModel.setMoleculeSet(selectionMoleculeSet);
+      selection.select(selectionChemModel);
+      renderer.getRenderer2DModel().setSelection(selection);
       renderer.paintMoleculeSet(moleculeSet, new AWTDrawVisitor(g2), drawArea, true);
       ImageIO.write(image, "png", out);
     }
@@ -104,20 +109,19 @@ public class Structure{
   }
 
   public void match_activating(String[] smarts) {
-    Color color = Color.RED;
     for (int i = 0; i < smarts.length; i++) {
-      match(smarts[i], color);
+      match(smarts[i]);
     }
   }
 
   public void match_deactivating(String[] smarts) {
-    Color color = Color.GREEN;
+    renderer.getRenderer2DModel().set( SelectBondGenerator.SelectionBondColor.class,Color.GREEN);
     for (int i = 0; i < smarts.length; i++) {
-      match(smarts[i], color);
+      match(smarts[i]);
     }
   }
 
-  public void match(String smarts, Color color) {
+  public void match(String smarts) {
 
     try {
       SMARTSQueryTool querytool = new SMARTSQueryTool(smarts);
@@ -151,12 +155,6 @@ public class Structure{
           }
         }
       }
-
-      // create a fake ChemModel to make the LogicalSelection happy
-      selectionChemModel.setMoleculeSet(selectionMoleculeSet);
-      selection.select(selectionChemModel);
-      renderer.getRenderer2DModel().setSelection(selection);
-      renderer.getRenderer2DModel().set( SelectBondGenerator.SelectionBondColor.class,color);
 
     }
     catch (Exception exc) { exc.printStackTrace(); }
