@@ -1,6 +1,6 @@
 # Java environment
 ENV["JAVA_HOME"] = "/usr/lib/jvm/java-6-sun" unless ENV["JAVA_HOME"]
-java_dir = File.join File.expand_path(File.dirname(__FILE__)),"public/java"
+java_dir = File.join File.expand_path(File.dirname(__FILE__)),"java"
 cdk = File.join java_dir, "cdk-1.3.5.jar"
 jchempaint = File.join java_dir, "cdk-jchempaint-15.jar"
 ENV["CLASSPATH"] = "#{ENV["CLASSPATH"]}:#{java_dir}:#{cdk}:#{jchempaint}"
@@ -10,19 +10,78 @@ require 'rjb'
 gem "opentox-ruby-api-wrapper", "= 1.6.0"
 require 'opentox-ruby-api-wrapper'
 
-post "/display" do
+#set :lock, true # avoid JVM memory allocation problems
+# -Xmx64m
+
+get "/display/activating/(.+)$" do
   content_type "image/png"
   attachment "#{params["smiles"]}.png"
-  s = Rjb::import('Structure').new(params["smiles"],200)
+  Rjb.load(nil,["-Xmx64m"])# avoid JVM memory allocation problems
+  s = Rjb::import('Structure').new(params["smiles"],150)
   s.match_activating(params["smarts"])
-  s.match_deactivating(["CC"])
   s.show
 end
 
-get %r{/smiles/(.+)/smarts/(.*)} do |smiles,smarts| 
+post "/display/deactivating" do
+  content_type "image/png"
+  attachment "#{params["smiles"]}.png"
+  Rjb.load(nil,["-Xmx64m"])# avoid JVM memory allocation problems
+  s = Rjb::import('Structure').new(params["smiles"],150)
+  s.match_deactivating(params["smarts"])
+  s.show
+end
+
+get %r{/smiles/(.+)/smarts/activating/(.*)/deactivating/(.*)/highlight/(.*)$} do |smiles,activating,deactivating,smarts| 
+  activating = activating.to_s.split(/\//).collect{|s| s.gsub(/"/,'')}
+  deactivating = deactivating.to_s.split(/\//).collect{|s| s.gsub(/"/,'')}
   content_type "image/png"
   attachment "#{smiles}.png"
-  s = Rjb::import('Structure').new(smiles,200)
+  Rjb.load(nil,["-Xmx64m"])# avoid JVM memory allocation problems
+  s = Rjb::import('Structure').new(smiles,150)
+  s.match_deactivating(deactivating) unless deactivating.empty?
+  s.match_activating(activating) unless activating.empty?
+  s.match(smarts)
+  s.show
+  #s = nil
+end
+
+get %r{/smiles/(.+)/smarts/activating/(.*)/deactivating/(.*)$} do |smiles,activating,deactivating| 
+  activating = activating.to_s.split(/\//).collect{|s| s.gsub(/"/,'')}
+  deactivating = deactivating.to_s.split(/\//).collect{|s| s.gsub(/"/,'')}
+  content_type "image/png"
+  attachment "#{smiles}.png"
+  Rjb.load(nil,["-Xmx64m"])# avoid JVM memory allocation problems
+  s = Rjb::import('Structure').new(smiles,150)
+  s.match_deactivating(deactivating)
+  s.match_activating(activating)
+  s.show
+  #s = nil
+end
+
+get %r{/smiles/(.+)/smarts/(.*)/(.*activating)$} do |smiles,allsmarts,effect| 
+  LOGGER.debug "String:"
+  LOGGER.debug allsmarts
+  smarts = allsmarts.to_s.split(/\//)
+  smarts.collect!{|s| s.gsub(/"/,'')}
+  LOGGER.debug "Smarts:"
+  LOGGER.debug smarts.to_yaml
+  content_type "image/png"
+  attachment "#{smiles}.png"
+  Rjb.load(nil,["-Xmx64m"])# avoid JVM memory allocation problems
+  s = Rjb::import('Structure').new(smiles,150)
+  if effect == "activating"
+    s.match_activating(smarts)
+  elsif effect == "deactivating"
+    s.match_deactivating(smarts)
+  end
+  s.show
+end
+
+get %r{/smiles/(.+)/smarts/(.*)$} do |smiles,smarts| 
+  content_type "image/png"
+  attachment "#{smiles}.png"
+  Rjb.load(nil,["-Xmx64m"])# avoid JVM memory allocation problems
+  s = Rjb::import('Structure').new(smiles,150)
   s.match(smarts)
   s.show
 end
@@ -30,14 +89,16 @@ end
 get %r{/smiles/(.+)} do |smiles| 
   content_type "image/png"
   attachment "#{smiles}.png"
-  Rjb::import('Structure').new(smiles,200).show
+  Rjb.load(nil,["-Xmx64m"])# avoid JVM memory allocation problems
+  Rjb::import('Structure').new(smiles,150).show
 end
 
 get %r{/(.+)/image} do |inchi| # catches all remaining get requests
    smiles = OpenTox::Compound.new(:inchi => inchi).smiles
    content_type "image/png"
    attachment "#{smiles}.png"
-   Rjb::import('Structure').new(smiles,200).show
+   Rjb.load(nil,["-Xmx64m"])# avoid JVM memory allocation problems
+   Rjb::import('Structure').new(smiles,150).show
 end
 
 get %r{/(.+)} do |inchi| # catches all remaining get requests

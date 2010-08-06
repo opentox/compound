@@ -2,6 +2,7 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.*;
+import java.lang.Math;
 import java.io.*;
 
 import java.awt.*;
@@ -35,6 +36,11 @@ public class Structure{
 
   StructureDiagramGenerator sdg = new StructureDiagramGenerator();
   SmilesParser sp = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+
+  List<IChemObject> matchingBonds = new ArrayList<IChemObject>();
+  List<IChemObject> activatingBonds = new ArrayList<IChemObject>();
+  List<IChemObject> deactivatingBonds = new ArrayList<IChemObject>();
+
   Map<IChemObject,Color> coloredMatches = new HashMap<IChemObject,Color>();
   Renderer renderer;
 
@@ -75,7 +81,17 @@ public class Structure{
 
   public byte[] show() {
     try {
+      // set colors
+      for (int i = 0; i < matchingBonds.size(); i++) {
+        float red = 0;
+        float green = 0;
+        IChemObject bond = (IChemObject) matchingBonds.get(i);
+        if (activatingBonds.contains(bond)) { red = 1; };
+        if (deactivatingBonds.contains(bond)) { green = 1; };
+        coloredMatches.put((IChemObject) bond , new Color(red,green,0));
+      }
       renderer.getRenderer2DModel().set( RendererModel.ColorHash.class, coloredMatches );
+      // render and write
       renderer.paintMoleculeSet(moleculeSet, new AWTDrawVisitor(g2), drawArea, true);
       ImageIO.write(image, "png", out);
     }
@@ -86,14 +102,16 @@ public class Structure{
   private void layout() {
     try {
       Rectangle2D last = new Rectangle(0,0);
-      for (int i = 0; i < moleculeSet.getMoleculeCount(); i++) {
+      //for (int i = 0; i < moleculeSet.getMoleculeCount(); i++) {
+      // reverse iteration to show small molecules at the right side
+      for (int i = moleculeSet.getMoleculeCount()-1; i >= 0 ; i--) {
         IAtomContainer mol = moleculeSet.getMolecule(i);
         sdg.setMolecule((IMolecule) mol);
         sdg.generateCoordinates();
         mol = sdg.getMolecule();
-        GeometryTools.translateAllPositive(mol);
         // get size of previous mol and shift to the right
-        last = GeometryTools.shiftContainer(mol, GeometryTools.getRectangle2D(mol), last, 5);
+        // gives nasty results for single atom molecules, but works otherwise
+        last = GeometryTools.shiftContainer(mol, GeometryTools.getRectangle2D(mol), last, 0);
         coordinated_mols[i] = (IMolecule) mol;
       }
       moleculeSet.setMolecules(coordinated_mols);
@@ -103,25 +121,22 @@ public class Structure{
 
   public void match_activating(String[] smarts) {
     for (int i = 0; i < smarts.length; i++) {
-      match(smarts[i],Color.RED);
+      match(smarts[i],true);
     }
   }
 
   public void match_deactivating(String[] smarts) {
     for (int i = 0; i < smarts.length; i++) {
-      match(smarts[i],Color.GREEN);
+      match(smarts[i],false);
     }
   }
 
-  public void match(String smarts) { match(smarts, Color.BLUE); }
+  public void match(String smarts) { match(smarts, true); }
 
-  public void match(String smarts, Color color) {
-
-    IAtom a1 = new Atom();
-    IAtom a2 = new Atom();
-    IBond bond = new Bond();
+  public void match(String smarts, Boolean active) {
 
     try {
+      int count;
       SMARTSQueryTool querytool = new SMARTSQueryTool(smarts);
       // iterate over molecule set
       for (int i = 0; i < moleculeSet.getMoleculeCount(); i++) {
@@ -131,19 +146,25 @@ public class Structure{
         boolean status = querytool.matches(mol);
         if (status) {
           List matches = querytool.getUniqueMatchingAtoms();
-          //System.out.print("Matches: ");
-          //System.out.println(matches);
           // iterate over all matches
           for (int j = 0; j < matches.size(); j++) {
             List atomIndices = (List) matches.get(j);
             // itrate over all atoms
             for (int k = 0; k < atomIndices.size(); k++) {
-              a1 = mol.getAtom( (Integer) atomIndices.get(k));
+              IAtom a1 = mol.getAtom( (Integer) atomIndices.get(k));
               // find bonds
               for (int l = k + 1; l < atomIndices.size(); l++) {
-                a2 = mol.getAtom( (Integer) atomIndices.get(l));
-                bond = mol.getBond(a1,a2);
-                if (bond != null) { coloredMatches.put((IChemObject) bond , color); }
+                IAtom a2 = mol.getAtom( (Integer) atomIndices.get(l));
+                IChemObject bond = (IChemObject) mol.getBond(a1,a2);
+                if (bond != null) {
+                  // collect all/active/inactive bonds
+                  if (!matchingBonds.contains(bond)) { matchingBonds.add(bond); }
+                  if (active) {
+                    if (!activatingBonds.contains(bond)) { activatingBonds.add(bond); }
+                  } else {
+                    if (!deactivatingBonds.contains(bond)) { deactivatingBonds.add(bond); }
+                  }
+                }
               }
             }
           }
@@ -152,7 +173,6 @@ public class Structure{
 
     }
     catch (Exception exc) { exc.printStackTrace(); }
-
   }
 
 }
