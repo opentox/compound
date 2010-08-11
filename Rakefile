@@ -1,7 +1,7 @@
 require 'rubygems'
 require 'rake'
 require 'opentox-ruby-api-wrapper'
-require 'tasks/opentox'
+#require 'tasks/opentox'
 
 @gems = "sinatra rest-client emk-sinatra-url-for sinatra-respond_to"
 
