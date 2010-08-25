@@ -7,7 +7,7 @@ ENV["CLASSPATH"] = "#{ENV["CLASSPATH"]}:#{java_dir}:#{cdk}:#{jchempaint}"
 
 require 'rubygems'
 require 'rjb'
-gem "opentox-ruby-api-wrapper", "= 1.6.3"
+gem "opentox-ruby-api-wrapper", "= 1.6.4"
 require 'opentox-ruby-api-wrapper'
 
 #set :lock, true # avoid JVM memory allocation problems
