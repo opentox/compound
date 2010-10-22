@@ -10,9 +10,6 @@ require 'rjb'
 gem "opentox-ruby-api-wrapper", "= 1.6.6"
 require 'opentox-ruby-api-wrapper'
 
-#set :lock, true # avoid JVM memory allocation problems
-# -Xmx64m
-
 get "/display/activating/(.+)$" do
   content_type "image/png"
   attachment "#{params["smiles"]}.png"
@@ -42,7 +39,6 @@ get %r{/smiles/(.+)/smarts/activating/(.*)/deactivating/(.*)/highlight/(.*)$} do
   s.match_activating(activating) unless activating.empty?
   s.match(smarts)
   s.show
-  #s = nil
 end
 
 get %r{/smiles/(.+)/smarts/activating/(.*)/deactivating/(.*)$} do |smiles,activating,deactivating| 
@@ -55,7 +51,6 @@ get %r{/smiles/(.+)/smarts/activating/(.*)/deactivating/(.*)$} do |smiles,activa
   s.match_deactivating(deactivating)
   s.match_activating(activating)
   s.show
-  #s = nil
 end
 
 get %r{/smiles/(.+)/smarts/(.*)/(.*activating)$} do |smiles,allsmarts,effect| 
@@ -94,7 +89,7 @@ get %r{/smiles/(.+)} do |smiles|
 end
 
 get %r{/(.+)/image} do |inchi| # catches all remaining get requests
-   smiles = OpenTox::Compound.new(:inchi => inchi).smiles
+   smiles = OpenTox::Compound.from_inchi(inchi).smiles
    content_type "image/png"
    attachment "#{smiles}.png"
    Rjb.load(nil,["-Xmx64m"])# avoid JVM memory allocation problems
@@ -106,22 +101,22 @@ get %r{/(.+)} do |inchi| # catches all remaining get requests
   case request.env['HTTP_ACCEPT']
   when "*/*"
     response['Content-Type'] = "chemical/x-daylight-smiles"
-    OpenTox::Compound.new(:inchi => inchi).smiles
+    OpenTox::Compound.from_inchi(inchi).smiles
   when "chemical/x-daylight-smiles"
     response['Content-Type'] = "chemical/x-daylight-smiles"
-    OpenTox::Compound.new(:inchi => inchi).smiles
+    OpenTox::Compound.from_inchi(inchi).smiles
   when "chemical/x-inchi"
     response['Content-Type'] = "chemical/x-inchi"
     inchi 
   when "chemical/x-mdl-sdfile"
     response['Content-Type'] = "chemical/x-mdl-sdfile"
-    OpenTox::Compound.new(:inchi => inchi).sdf
+    OpenTox::Compound.from_inchi(inchi).sdf
   when "image/gif"
     response['Content-Type'] = "image/gif"
-    OpenTox::Compound.new(:inchi => inchi).gif
+    OpenTox::Compound.from_inchi(inchi).gif
   when "image/png"
     response['Content-Type'] = "image/png"
-    OpenTox::Compound.new(:inchi => inchi).png
+    OpenTox::Compound.from_inchi(inchi).png
   when "text/plain"
     response['Content-Type'] = "text/plain"
     uri = File.join @@cactus_uri,inchi,"names"
@@ -138,13 +133,13 @@ post '/?' do
   begin
     case request.content_type
     when /chemical\/x-daylight-smiles/
-      OpenTox::Compound.new(:smiles => input).uri + "\n"
+      OpenTox::Compound.from_smiles(input).uri + "\n"
     when /chemical\/x-inchi/
-      OpenTox::Compound.new(:inchi => input).uri + "\n"
+      OpenTox::Compound.from_inchi(input).uri + "\n"
     when /chemical\/x-mdl-sdfile|chemical\/x-mdl-molfile/
-      OpenTox::Compound.new(:sdf => input).uri + "\n"
+      OpenTox::Compound.from_sdf(input).uri + "\n"
     when /text\/plain/
-      OpenTox::Compound.new(:name => input).uri + "\n"
+      OpenTox::Compound.from_name(input).uri + "\n"
     else
       status 400
       "Unsupported MIME type '#{request.content_type}'"
