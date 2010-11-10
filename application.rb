@@ -10,38 +10,16 @@ require 'rjb'
 gem "opentox-ruby-api-wrapper", "= 1.6.6"
 require 'opentox-ruby-api-wrapper'
 
-get "/display/activating/(.+)$" do
-  content_type "image/png"
-  attachment "#{params["smiles"]}.png"
-  Rjb.load(nil,["-Xmx64m"])# avoid JVM memory allocation problems
-  s = Rjb::import('Structure').new(params["smiles"],150)
-  s.match_activating(params["smarts"])
-  s.show
+before do
+  @inchi = URI.unescape request.env['REQUEST_URI'].sub(/^\//,'').sub(/.*compound\//,'').sub(/\/smarts.*$/,'') # hack to avoid sinatra's URI/CGI unescaping, splitting, ..."
 end
 
-post "/display/deactivating" do
-  content_type "image/png"
-  attachment "#{params["smiles"]}.png"
-  Rjb.load(nil,["-Xmx64m"])# avoid JVM memory allocation problems
-  s = Rjb::import('Structure').new(params["smiles"],150)
-  s.match_deactivating(params["smarts"])
-  s.show
-end
-
-get %r{/smiles/(.+)/smarts/activating/(.*)/deactivating/(.*)/highlight/(.*)$} do |smiles,activating,deactivating,smarts| 
-  activating = activating.to_s.split(/\//).collect{|s| s.gsub(/"/,'')}
-  deactivating = deactivating.to_s.split(/\//).collect{|s| s.gsub(/"/,'')}
-  content_type "image/png"
-  attachment "#{smiles}.png"
-  Rjb.load(nil,["-Xmx64m"])# avoid JVM memory allocation problems
-  s = Rjb::import('Structure').new(smiles,150)
-  s.match_deactivating(deactivating) unless deactivating.empty?
-  s.match_activating(activating) unless activating.empty?
-  s.match(smarts)
-  s.show
-end
-
-get %r{/smiles/(.+)/smarts/activating/(.*)/deactivating/(.*)$} do |smiles,activating,deactivating| 
+# Display activating (red) and deactivating (green) substructures. Overlaps betwen activating and deactivating structures are marked in yellow.
+# @example
+#   curl http://webservices.in-silico.ch/compound/compound/InChI=1S/C6H5NO2/c8-7(9)6-4-2-1-3-5-6/h1-5H/smarts/activating/cN/ccN/deactivating/cc" > img.png
+# @return [image/png] Image with highlighted substructures
+get %r{/(.+)/smarts/activating/(.*)/deactivating/(.*)$} do |inchi,activating,deactivating| 
+  smiles = OpenTox::Compound.from_inchi(@inchi).smiles
   activating = activating.to_s.split(/\//).collect{|s| s.gsub(/"/,'')}
   deactivating = deactivating.to_s.split(/\//).collect{|s| s.gsub(/"/,'')}
   content_type "image/png"
@@ -53,42 +31,10 @@ get %r{/smiles/(.+)/smarts/activating/(.*)/deactivating/(.*)$} do |smiles,activa
   s.show
 end
 
-get %r{/smiles/(.+)/smarts/(.*)/(.*activating)$} do |smiles,allsmarts,effect| 
-  LOGGER.debug "String:"
-  LOGGER.debug allsmarts
-  smarts = allsmarts.to_s.split(/\//)
-  smarts.collect!{|s| s.gsub(/"/,'')}
-  LOGGER.debug "Smarts:"
-  LOGGER.debug smarts.to_yaml
-  content_type "image/png"
-  attachment "#{smiles}.png"
-  Rjb.load(nil,["-Xmx64m"])# avoid JVM memory allocation problems
-  s = Rjb::import('Structure').new(smiles,150)
-  if effect == "activating"
-    s.match_activating(smarts)
-  elsif effect == "deactivating"
-    s.match_deactivating(smarts)
-  end
-  s.show
-end
-
-get %r{/smiles/(.+)/smarts/(.*)$} do |smiles,smarts| 
-  content_type "image/png"
-  attachment "#{smiles}.png"
-  Rjb.load(nil,["-Xmx64m"])# avoid JVM memory allocation problems
-  s = Rjb::import('Structure').new(smiles,150)
-  s.match(smarts)
-  s.show
-end
-
-get %r{/smiles/(.+)} do |smiles| 
-  content_type "image/png"
-  attachment "#{smiles}.png"
-  Rjb.load(nil,["-Xmx64m"])# avoid JVM memory allocation problems
-  Rjb::import('Structure').new(smiles,150).show
-end
-
+# Get png image
+# @return [image/png] Image data
 get %r{/(.+)/image} do |inchi| # catches all remaining get requests
+  inchi = URI.unescape request.env['REQUEST_URI'].sub(/^\//,'').sub(/.*compound\//,'').sub(/\/smarts.*$/,'') # hack to avoid sinatra's URI/CGI unescaping, splitting, ..."
    smiles = OpenTox::Compound.from_inchi(inchi).smiles
    content_type "image/png"
    attachment "#{smiles}.png"
@@ -96,36 +42,51 @@ get %r{/(.+)/image} do |inchi| # catches all remaining get requests
    Rjb::import('Structure').new(smiles,150).show
 end
 
+# Get compound representation
+# @param [optinal, HEADER] Accept one of `chemical/x-daylight-smiles, chemical/x-inchi, chemical/x-mdl-sdfile, chemical/x-mdl-molfile, text/plain, image/gif, image/png`, defaults to chemical/x-daylight-smiles
+# @example Get smiles
+#   curl http://webservices.in-silico.ch/compound/InChI=1S/C6H6/c1-2-4-6-5-3-1/h1-6H
+# @example Get all known names 
+#   curl -H "Accept:text/plain" http://webservices.in-silico.ch/compound/InChI=1S/C6H6/c1-2-4-6-5-3-1/h1-6H
+# @return [chemical/x-daylight-smiles, chemical/x-inchi, chemical/x-mdl-sdfile, chemical/x-mdl-molfile, text/plain, image/gif, image/png] Compound representation
 get %r{/(.+)} do |inchi| # catches all remaining get requests
-  inchi = URI.unescape request.env['REQUEST_URI'].sub(/^\//,'').sub(/.*compound\//,'') # hack to avoid sinatra's URI/CGI unescaping, splitting, ..."
+  #inchi = URI.unescape request.env['REQUEST_URI'].sub(/^\//,'').sub(/.*compound\//,'') # hack to avoid sinatra's URI/CGI unescaping, splitting, ..."
   case request.env['HTTP_ACCEPT']
   when "*/*"
     response['Content-Type'] = "chemical/x-daylight-smiles"
-    OpenTox::Compound.from_inchi(inchi).smiles
+    OpenTox::Compound.from_inchi(@inchi).smiles
   when "chemical/x-daylight-smiles"
     response['Content-Type'] = "chemical/x-daylight-smiles"
-    OpenTox::Compound.from_inchi(inchi).smiles
+    OpenTox::Compound.from_inchi(@inchi).smiles
   when "chemical/x-inchi"
     response['Content-Type'] = "chemical/x-inchi"
-    inchi 
+    @inchi 
   when "chemical/x-mdl-sdfile"
     response['Content-Type'] = "chemical/x-mdl-sdfile"
-    OpenTox::Compound.from_inchi(inchi).sdf
+    OpenTox::Compound.from_inchi(@inchi).sdf
   when "image/gif"
     response['Content-Type'] = "image/gif"
-    OpenTox::Compound.from_inchi(inchi).gif
+    OpenTox::Compound.from_inchi(@inchi).gif
   when "image/png"
     response['Content-Type'] = "image/png"
-    OpenTox::Compound.from_inchi(inchi).png
+    OpenTox::Compound.from_inchi(@inchi).png
   when "text/plain"
     response['Content-Type'] = "text/plain"
-    uri = File.join @@cactus_uri,inchi,"names"
+    uri = File.join @@cactus_uri,@inchi,"names"
     RestClient.get(uri).body
   else
     halt 400, "Unsupported MIME type '#{request.env['HTTP_ACCEPT']}'"
   end
 end
 
+# Create a new compound URI (compounds are not saved at the compound service)
+# @param [HEADER] Content-type one of `chemical/x-daylight-smiles, chemical/x-inchi, chemical/x-mdl-sdfile, chemical/x-mdl-molfile, text/plain`
+# @example Create compound from Smiles string
+#   curl -X POST -H "Content-type:chemical/x-daylight-smiles" --data "c1ccccc1" http://webservices.in-silico.ch/compound
+# @example Create compound from name, uses an external lookup service and should work also with trade names, CAS numbers, ...
+#   curl -X POST -H "Content-type:text/plain" --data "Benzene" http://webservices.in-silico.ch/compound
+# @param [BODY] - string with identifier/data in selected Content-type
+# @return [text/uri-list] compound URI
 post '/?' do 
 
   input = request.env["rack.input"].read
