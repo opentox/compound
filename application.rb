@@ -19,7 +19,7 @@ end
 #   curl http://webservices.in-silico.ch/compound/compound/InChI=1S/C6H5NO2/c8-7(9)6-4-2-1-3-5-6/h1-5H/smarts/activating/cN/ccN/deactivating/cc" > img.png
 # @return [image/png] Image with highlighted substructures
 get %r{/(.+)/smarts/activating/(.*)/deactivating/(.*)$} do |inchi,activating,deactivating| 
-  smiles = OpenTox::Compound.from_inchi(@inchi).smiles
+  smiles = OpenTox::Compound.from_inchi(@inchi).to_smiles
   activating = activating.to_s.split(/\//).collect{|s| s.gsub(/"/,'')}
   deactivating = deactivating.to_s.split(/\//).collect{|s| s.gsub(/"/,'')}
   content_type "image/png"
@@ -35,7 +35,7 @@ end
 # @return [image/png] Image data
 get %r{/(.+)/image} do |inchi| # catches all remaining get requests
   inchi = URI.unescape request.env['REQUEST_URI'].sub(/^\//,'').sub(/.*compound\//,'').sub(/\/smarts.*$/,'') # hack to avoid sinatra's URI/CGI unescaping, splitting, ..."
-   smiles = OpenTox::Compound.from_inchi(inchi).smiles
+   smiles = OpenTox::Compound.from_inchi(inchi).to_smiles
    content_type "image/png"
    attachment "#{smiles}.png"
    Rjb.load(nil,["-Xmx64m"])# avoid JVM memory allocation problems
@@ -54,22 +54,22 @@ get %r{/(.+)} do |inchi| # catches all remaining get requests
   case request.env['HTTP_ACCEPT']
   when "*/*"
     response['Content-Type'] = "chemical/x-daylight-smiles"
-    OpenTox::Compound.from_inchi(@inchi).smiles
+    OpenTox::Compound.from_inchi(@inchi).to_smiles
   when "chemical/x-daylight-smiles"
     response['Content-Type'] = "chemical/x-daylight-smiles"
-    OpenTox::Compound.from_inchi(@inchi).smiles
+    OpenTox::Compound.from_inchi(@inchi).to_smiles
   when "chemical/x-inchi"
     response['Content-Type'] = "chemical/x-inchi"
     @inchi 
   when "chemical/x-mdl-sdfile"
     response['Content-Type'] = "chemical/x-mdl-sdfile"
-    OpenTox::Compound.from_inchi(@inchi).sdf
+    OpenTox::Compound.from_inchi(@inchi).to_sdf
   when "image/gif"
     response['Content-Type'] = "image/gif"
-    OpenTox::Compound.from_inchi(@inchi).gif
+    OpenTox::Compound.from_inchi(@inchi).to_gif
   when "image/png"
     response['Content-Type'] = "image/png"
-    OpenTox::Compound.from_inchi(@inchi).png
+    OpenTox::Compound.from_inchi(@inchi).to_png
   when "text/plain"
     response['Content-Type'] = "text/plain"
     uri = File.join @@cactus_uri,@inchi,"names"
