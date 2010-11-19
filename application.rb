@@ -11,7 +11,7 @@ gem "opentox-ruby-api-wrapper", "= 1.6.6"
 require 'opentox-ruby-api-wrapper'
 
 before do
-  @inchi = URI.unescape request.env['REQUEST_URI'].sub(/^\//,'').sub(/.*compound\//,'').sub(/\/smarts.*$/,'') # hack to avoid sinatra's URI/CGI unescaping, splitting, ..."
+  @inchi = URI.unescape request.env['REQUEST_URI'].sub(/^\//,'').sub(/.*compound\//,'').sub(/\/smarts.*$/,'').sub(/\/image/,'') # hack to avoid sinatra's URI/CGI unescaping, splitting, ..."
 end
 
 # Display activating (red) and deactivating (green) substructures. Overlaps betwen activating and deactivating structures are marked in yellow.
@@ -24,22 +24,29 @@ get %r{/(.+)/smarts/activating/(.*)/deactivating/(.*)$} do |inchi,activating,dea
   deactivating = deactivating.to_s.split(/\//).collect{|s| s.gsub(/"/,'')}
   content_type "image/png"
   attachment "#{smiles}.png"
-  Rjb.load(nil,["-Xmx64m"])# avoid JVM memory allocation problems
-  s = Rjb::import('Structure').new(smiles,150)
-  s.match_deactivating(deactivating)
-  s.match_activating(activating)
-  s.show
+  begin
+    Rjb.load(nil,["-Xmx64m"])# avoid JVM memory allocation problems
+    s = Rjb::import('Structure').new(smiles,150)
+    s.match_deactivating(deactivating)
+    s.match_activating(activating)
+    s.show
+  rescue => e
+    LOGGER.warn e.message
+  end
 end
 
 # Get png image
 # @return [image/png] Image data
 get %r{/(.+)/image} do |inchi| # catches all remaining get requests
-  inchi = URI.unescape request.env['REQUEST_URI'].sub(/^\//,'').sub(/.*compound\//,'').sub(/\/smarts.*$/,'') # hack to avoid sinatra's URI/CGI unescaping, splitting, ..."
-   smiles = OpenTox::Compound.from_inchi(inchi).to_smiles
-   content_type "image/png"
-   attachment "#{smiles}.png"
-   Rjb.load(nil,["-Xmx64m"])# avoid JVM memory allocation problems
-   Rjb::import('Structure').new(smiles,150).show
+  smiles = OpenTox::Compound.from_inchi(@inchi).to_smiles
+  content_type "image/png"
+  attachment "#{smiles}.png"
+  begin
+    Rjb.load(nil,["-Xmx64m"])# avoid JVM memory allocation problems
+    Rjb::import('Structure').new(smiles,150).show
+  rescue
+    LOGGER.warn e.message
+  end
 end
 
 # Get compound representation
