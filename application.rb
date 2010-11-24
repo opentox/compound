@@ -7,8 +7,8 @@ ENV["CLASSPATH"] = "#{ENV["CLASSPATH"]}:#{java_dir}:#{cdk}:#{jchempaint}"
 
 require 'rubygems'
 require 'rjb'
-gem "opentox-ruby-api-wrapper", "= 1.6.6"
-require 'opentox-ruby-api-wrapper'
+gem "opentox-ruby", "~> 0"
+require 'opentox-ruby'
 
 before do
   @inchi = URI.unescape request.env['REQUEST_URI'].sub(/^\//,'').sub(/.*compound\//,'').sub(/\/smarts.*$/,'').sub(/\/image/,'') # hack to avoid sinatra's URI/CGI unescaping, splitting, ..."
