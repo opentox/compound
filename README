@@ -1,15 +1,17 @@
-OpenTox Compounds
-=================
+OpenTox Compound
+================
 
 * An OpenTox REST Webservice (http://www.opentox.org)
 * Implements the OpenTox compound API 1.1 (http://opentox.org/dev/apis/api-1.1/structure)
 
-REST operations:
+REST operations
+---------------
 
 Get the representation of a compound 	GET 	/compound/{id} 	- 												Compound representation		200,404,500
 Create a new compound 							 	POST 	/compound 			Compound representation		URIs for new compounds 		200,400,500
 
-Supported MIME formats (http://chemical-mime.sourceforge.net/):
+Supported MIME formats (http://chemical-mime.sourceforge.net/)
+--------------------------------------------------------------
 
 	* chemical/x-daylight-smiles (default)
 	* chemical/x-inchi
@@ -17,7 +19,8 @@ Supported MIME formats (http://chemical-mime.sourceforge.net/):
 	* text/plain (chemical names)
 	* image/gif (returns image uri, output only)
 
-Examples:
+Examples
+--------
 
 	Create a compound_uri from smiles:
 		curl -X POST  -H "Content-Type:chemical/x-daylight-smiles" --data-binary "c1ccccc1" http://webservices.in-silico.ch/compound
@@ -40,4 +43,10 @@ Examples:
 	Get all names for a compound_uri:
 		curl -H "Accept:text/plain" http://webservices.in-silico.ch/compound/InChI=1S/C6H6/c1-2-4-6-5-3-1/h1-6H
 
-Installation: http://wiki.github.com/helma/opentox-documentation/installation-of-opentox-webservices
+API documentation
+-----------------
+
+http://rdoc.info/github/opentox/compound
+
+Copyright (c) 2009-2011 Christoph Helma, Martin Guetlein, Micha Rautenberg, Andreas Maunz, David Vorgrimmler, Denis Gebele. See LICENSE for details.
+
