@@ -102,7 +102,6 @@ public class Structure{
   private void layout() {
     try {
       Rectangle2D last = new Rectangle(0,0);
-      //for (int i = 0; i < moleculeSet.getMoleculeCount(); i++) {
       // reverse iteration to show small molecules at the right side
       for (int i = moleculeSet.getMoleculeCount()-1; i >= 0 ; i--) {
         IAtomContainer mol = moleculeSet.getMolecule(i);
@@ -111,7 +110,12 @@ public class Structure{
         mol = sdg.getMolecule();
         // get size of previous mol and shift to the right
         // gives nasty results for single atom molecules, but works otherwise
-        last = GeometryTools.shiftContainer(mol, GeometryTools.getRectangle2D(mol), last, 0);
+        // last = GeometryTools.shiftContainer(mol, GeometryTools.getRectangle2D(mol), last, 0);
+        // fix suggested by http://sourceforge.net/mailarchive/forum.php?thread_name=AANLkTikJQSjFkNCmO2gb0jw5PQxZRoFSTbruOa2DMCmZ%40mail.gmail.com&forum_name=cdk-jchempaint
+        // shifts single atoms to the right, but does not adjust the layout of larger structures
+        Rectangle2D bb = GeometryTools.getRectangle2D(mol);
+        Rectangle2D minBB = new Rectangle2D.Double(bb.getX(), bb.getY(), Math.max(bb.getWidth(), 15), bb.getHeight());
+        last = GeometryTools.shiftContainer(mol, minBB, last, 0);
         coordinated_mols[i] = (IMolecule) mol;
       }
       moleculeSet.setMolecules(coordinated_mols);
