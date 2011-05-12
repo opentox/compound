@@ -11,7 +11,8 @@ gem "opentox-ruby", "~> 1"
 require 'opentox-ruby'
 
 before do
-  @inchi = URI.unescape request.env['REQUEST_URI'].sub(/^\//,'').sub(/.*compound\//,'').sub(/\/smarts.*$/,'').sub(/\/image/,'') # hack to avoid sinatra's URI/CGI unescaping, splitting, ..."
+  @inchi = URI.unescape request.env['REQUEST_URI'].sub(/^\//,'').sub(/.*compound\//,'').sub(/\/smarts.*$/,'').sub(/\/image/,'').sub(/\?.*$/,'') # hack to avoid sinatra's URI/CGI unescaping, splitting, ..."
+  puts @inchi
 end
 
 # Display activating (red) and deactivating (green) substructures. Overlaps betwen activating and deactivating structures are marked in yellow.
@@ -35,18 +36,22 @@ get %r{/(.+)/smarts/activating/(.*)/deactivating/(.*)$} do |inchi,activating,dea
   end
 end
 
-# Get png image
-# @return [image/png] Image data
-get %r{/(.+)/image} do |inchi| # catches all remaining get requests
-  smiles = OpenTox::Compound.from_inchi(@inchi).to_smiles
-  content_type "image/png"
-  attachment "#{smiles}.png"
+def png_from_smiles(smiles)
   begin
     Rjb.load(nil,["-Xmx64m"])# avoid JVM memory allocation problems
     Rjb::import('Structure').new(smiles,150).show
   rescue
     LOGGER.warn e.message
   end
+end
+
+# Get png image
+# @return [image/png] Image data
+get %r{/(.+)/image} do |inchi| # catches all remaining get requests
+  smiles = OpenTox::Compound.from_inchi(@inchi).to_smiles
+  content_type "image/png"
+  attachment "#{smiles}.png"
+  png_from_smiles(smiles)
 end
 
 # Get compound representation
@@ -76,7 +81,7 @@ get %r{/(.+)} do |inchi| # catches all remaining get requests
     OpenTox::Compound.from_inchi(@inchi).to_gif
   when "image/png"
     response['Content-Type'] = "image/png"
-    OpenTox::Compound.from_inchi(@inchi).to_png
+    png_from_smiles(OpenTox::Compound.from_inchi(@inchi).to_smiles)
   when "text/plain"
     response['Content-Type'] = "text/plain"
     uri = File.join @@cactus_uri,@inchi,"names"
