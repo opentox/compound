@@ -87,7 +87,7 @@ get %r{/(.+)} do |inchi| # catches all remaining get requests
     uri = File.join @@cactus_uri,@inchi,"names"
     RestClient.get(uri).body
   else
-    halt 400, "Unsupported MIME type '#{request.env['HTTP_ACCEPT']}'"
+    raise OpenTox::BadRequestError.new "Unsupported MIME type '#{request.env['HTTP_ACCEPT']}'"
   end
 end
 
