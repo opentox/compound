@@ -1,4 +1,4 @@
-epenTox Compound
+OpenTox Compound
 ================
 
 - An [OpenTox](http://www.opentox.org) REST Webservice 
