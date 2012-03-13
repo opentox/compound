@@ -38,7 +38,7 @@ end
 
 def png_from_smiles(smiles)
   begin
-    Rjb.load(nil,["-Xmx64m"])# avoid JVM memory allocation problems
+    Rjb.load(nil,["-Xmx64m","-Djava.awt.headless=true"])# avoid JVM memory allocation problems
     Rjb::import('Structure').new(smiles,150).show
   rescue
     LOGGER.warn e.message
