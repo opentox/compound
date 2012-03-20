@@ -86,6 +86,9 @@ get %r{/(.+)} do |inchi| # catches all remaining get requests
     response['Content-Type'] = "text/plain"
     uri = File.join @@cactus_uri,@inchi,"names"
     RestClient.get(uri).body
+  when "text/list"
+        response['Content-Type'] = "text/list"
+        OpenTox::Compound.from_inchi(@inchi).to_names_hash.inspect
   else
     raise OpenTox::BadRequestError.new "Unsupported MIME type '#{request.env['HTTP_ACCEPT']}'"
   end
