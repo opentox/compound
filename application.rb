@@ -12,7 +12,7 @@ require 'opentox-ruby'
 
 before do
   @inchi = URI.unescape request.env['REQUEST_URI'].sub(/^\//,'').sub(/.*compound\//,'').sub(/\/smarts.*$/,'').sub(/\/image/,'').sub(/\?.*$/,'') # hack to avoid sinatra's URI/CGI unescaping, splitting, ..."
-  puts @inchi
+  #puts @inchi
 end
 
 # Display activating (red) and deactivating (green) substructures. Overlaps betwen activating and deactivating structures are marked in yellow.
