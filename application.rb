@@ -7,7 +7,7 @@ ENV["CLASSPATH"] = "#{ENV["CLASSPATH"]}:#{java_dir}:#{cdk}:#{jchempaint}"
 
 require 'rubygems'
 require 'rjb'
-gem "opentox-ruby", "~> 3"
+gem "opentox-ruby", "~> 4"
 require 'opentox-ruby'
 
 before do
