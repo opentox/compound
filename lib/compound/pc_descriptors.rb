@@ -20,10 +20,9 @@ module OpenTox
         if (!@lib || @lib.include?("cdk"))
           cdk = CDKDescriptors.new(@params)
           cdk_master, cdk_ids = cdk.calculate
-          cdk_single_ids = cdk_master[0].collect { |id| id.to_s.sub(/[^-]*-/,"").gsub(/[\/.\\\(\)\{\}\[\]]/,"_") } # get column headers w/ nice '_'
-          cdk_master[0] = cdk_single_ids.collect{|x| x} # Single IDs as features in result ds
-          cdk_ids.shift # remove SMILES
-          cdk_single_ids.shift # remove SMILES
+          cdk_single_ids = cdk_master[0].to_a.collect { |id| id.to_s.sub(/[^-]*-/,"").gsub(/[\/.\\\(\)\{\}\[\]]/,"_") } # get column headers w/ nice '_'
+          cdk_master[0].each_index{ |idx| cdk_master[0][idx] = cdk_single_ids[idx] } # Single IDs as features in result ds
+          cdk_single_ids.shift # remove SMILES for IDs
         end
         if (!@lib || @lib.include?("openbabel"))
           openbabel = OpenBabelDescriptors.new(@params)
@@ -45,7 +44,7 @@ module OpenTox
       def master_join (m1, m2)
         if m2 && m1
           nr_cols = (m2[0].size)-1
-          $logger.debug "Merging #{nr_cols} new columns on #{m1[0].size}"
+          $logger.debug "Merging #{nr_cols} new columns on #{m1[0].size} (including ID), yields #{nr_cols + m1[0].size}"
           m1.each {|row| nr_cols.times { row.push(nil) }  }
           m2.each do |row|
             temp = m1.assoc(row[0]) # Finds the appropriate line in master
@@ -99,6 +98,7 @@ module OpenTox
       def calculate
         master = nil
         cdk_class = nil
+        ids_multiplied = nil
         begin
           cdk_class = Rjb::import('ApplyCDKDescriptors')
           pc_descriptors = YAML::load_file($keysfile)
@@ -133,6 +133,8 @@ module OpenTox
             master[0][0] = "InChI"
             master[1][0] = @inchi
             master[1].collect! { |x| x.to_s == "null" ? nil : x }
+            ids_multiplied = master[0].to_a.collect { |x| x.gsub(/-.*/,"") }
+            ids_multiplied.shift # remove ID
           end
         rescue Exception => e
           $logger.debug "#{e.class}: #{e.message}"
@@ -140,7 +142,7 @@ module OpenTox
         ensure
           [ csvfile ].each { |f| File.delete(f) } if csvfile
         end
-        [ master, ids ]
+        [ master, ids_multiplied ]
       end
     end
 
