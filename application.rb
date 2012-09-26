@@ -1,4 +1,16 @@
-require 'openbabel'
+# application.rb
+# Loads libraries and webapps
+# Author: Christoph Helma, Andreas Maunz
+
+# Library code
+$logger.debug "Compound booting: #{$compound.collect{|k,v| "#{k}: '#{v}'"} }"
+Dir['./lib/utils/shims/*.rb'].each { |f| require f } # Shims for legacy code
+Dir['./lib/utils/*.rb'].each { |f| require f } # Utils for Libs
+Dir['./lib/compound/*.rb'].each { |f| require f } # Libs
+Dir['./lib/*.rb'].each { |f| require f } # Libs
+Dir['./webapp/*.rb'].each { |f| require f } # Webapps
+
+# Entry point
 module OpenTox
   class Application < Service
 
@@ -41,7 +53,7 @@ module OpenTox
     end
 
     # Get compound representation
-    # @param [optinal, HEADER] Accept one of `chemical/x-daylight-smiles, chemical/x-inchi, chemical/x-mdl-sdfile, chemical/x-mdl-molfile, text/plain, image/gif, image/png`, defaults to chemical/x-daylight-smiles
+    # @param [optional, HEADER] Accept one of `chemical/x-daylight-smiles, chemical/x-inchi, chemical/x-mdl-sdfile, chemical/x-mdl-molfile, text/plain, image/gif, image/png`, defaults to chemical/x-daylight-smiles
     # @example Get smiles
     #   curl http://webservices.in-silico.ch/compound/InChI=1S/C6H6/c1-2-4-6-5-3-1/h1-6H
     # @example Get all known names 
@@ -52,6 +64,8 @@ module OpenTox
       return @inchi if @accept == "chemical/x-inchi"
       obconversion @inchi, "inchi", FORMATS[@accept]
     end
+
+    
 
     # Create a new compound URI (compounds are not saved at the compound service)
     # @param [HEADER] Content-type one of `chemical/x-daylight-smiles, chemical/x-inchi, chemical/x-mdl-sdfile, chemical/x-mdl-molfile, text/plain`
@@ -67,6 +81,12 @@ module OpenTox
       return to(File.join("/compound",@body)) if @content_type == "chemical/x-inchi"
       to(File.join("compound",obconversion(@body, FORMATS[@content_type], "inchi")))
     end
+
+    #post '/compound/foo' do
+    #  inchi="InChI=1S/C6H6/c1-2-4-6-5-3-1/h1-6H"
+    #  $logger.debug inchi
+    #  OpenTox::Compound.from_inchi($compound[:uri],inchi)
+    #end
 
   end
 end
