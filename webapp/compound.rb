@@ -6,6 +6,65 @@ module OpenTox
 
   class Application < Service
 
+
+
+    ## Get a list of descriptor calculation algorithms
+    ## @return [text/uri-list] URIs
+    get '/compound/*/pc' do
+      inchi=params["captures"][0]
+      algorithms = YAML::load_file File.join(ENV['HOME'], ".opentox", "config", "pc_descriptors.yaml")
+      list = (algorithms.keys.sort << "AllDescriptors").collect { |name| url_for("/compound/#{inchi}/pc/#{name}",:full) }.join("\n") + "\n"
+      format_output(list)
+    end
+
+
+    # Get representation of Descriptor Calculation Algorithm
+    # @return [String] Representation
+    get '/compound/*/pc/*' do
+      inchi=params["captures"][0]
+      params[:descriptor]=params["captures"][1]
+      descriptors = YAML::load_file File.join(ENV['HOME'], ".opentox", "config", "pc_descriptors.yaml")
+      alg_params = [
+        { DC.description => "Dataset URI",
+          OT.paramScope => "mandatory",
+          DC.title => "dataset_uri" }
+      ]
+      if params[:descriptor] != "AllDescriptors"
+        descriptors = descriptors[params[:descriptor]]
+      else
+        alg_params << {
+          DC.description => "Physico-chemical type, one or more of '#{descriptors.collect { |id, info| info[:pc_type] }.uniq.sort.join(",")}'",
+          OT.paramScope => "optional", DC.title => "pc_type"
+        }
+        alg_params << {
+          DC.description => "Software Library, one or more of '#{descriptors.collect { |id, info| info[:lib] }.uniq.sort.join(",")}'",
+          OT.paramScope => "optional", DC.title => "lib"
+        }
+        descriptors = {:id => "AllDescriptors", :name => "All PC descriptors" } # Comes from pc_descriptors.yaml for single descriptors
+      end
+  
+      if descriptors
+        # Contents
+        algorithm = OpenTox::Algorithm.new(url_for("/compound/#{inchi}/pc/#{params[:descriptor]}",:full))
+        mmdata = {
+          DC.title => params[:descriptor],
+          DC.creator => "andreas@maunz.de",
+          DC.description => descriptors[:name],
+          RDF.type => [OTA.DescriptorCalculation],
+        }
+        mmdata[DC.description] << (", pc_type: " + descriptors[:pc_type]) unless descriptors[:id] == "AllDescriptors"
+        mmdata[DC.description] << (", lib: " + descriptors[:lib])         unless descriptors[:id] == "AllDescriptors"
+        algorithm.metadata=mmdata
+        algorithm.parameters = alg_params
+        format_output(algorithm)
+      else
+        resource_not_found_error "Unknown descriptor #{params[:descriptor]}."
+      end
+    end
+
+
+
+
     # Calculate PC descriptors
     # Single descriptors or sets of descriptors can be selected
     # Sets are selected via lib and/or pc_type, and take precedence, when also a descriptor is submitted
@@ -49,33 +108,6 @@ module OpenTox
               { RDF::DC.title => "pc_type", RDF::OT.paramValue => pc_type},
           ]
 
-          #cdk_single_ids && cdk_single_ids.each_with_index { |id,idx|
-          #  raise "Feature not found" if ! ds.features[File.join(ds.uri, "feature", id.to_s)]
-          #  ds.add_feature_metadata(File.join(ds.uri, "feature", id.to_s),{DC.description => "#{pc_descriptors[cdk_ids[idx]][:name]} [#{pc_descriptors[cdk_ids[idx]][:pc_type]}, #{pc_descriptors[cdk_ids[idx]][:lib]}]"})
-          #  creator_uri = ds.uri.gsub(/\/dataset\/.*/, "/algorithm/pc")
-          #  creator_uri += "/#{cdk_ids[idx]}" if params[:add_uri]
-          #  ds.add_feature_metadata(File.join(ds.uri, "feature", id.to_s),{DC.creator => creator_uri})
-          #  ds.add_feature_metadata(File.join(ds.uri, "feature", id.to_s),{OT.hasSource => params[:dataset_uri]})
-          #}
-
-          #ob_ids && ob_ids.each { |id|
-          #  raise "Feature not found" if ! ds.features[File.join(ds.uri, "feature", id.to_s)]
-          #  ds.add_feature_metadata(File.join(ds.uri, "feature", id.to_s),{DC.description => "#{pc_descriptors[id][:name]} [#{pc_descriptors[id][:pc_type]}, #{pc_descriptors[id][:lib]}]"})
-          #  creator_uri = ds.uri.gsub(/\/dataset\/.*/, "/algorithm/pc")
-          #  creator_uri += "/#{id}" if params[:add_uri]
-          #  ds.add_feature_metadata(File.join(ds.uri, "feature", id.to_s),{DC.creator => creator_uri})
-          #  ds.add_feature_metadata(File.join(ds.uri, "feature", id.to_s),{OT.hasSource => params[:dataset_uri]})
-          #}
-          #jl_ids && jl_ids.each { |id|
-          #  raise "Feature not found" if ! ds.features[File.join(ds.uri, "feature", id.to_s)]
-          #  ds.add_feature_metadata(File.join(ds.uri, "feature", id.to_s),{DC.description => "#{pc_descriptors[id][:name]} [#{pc_descriptors[id][:pc_type]}, #{pc_descriptors[id][:lib]}]"})
-          #  creator_uri = ds.uri.gsub(/\/dataset\/.*/, "/algorithm/pc")
-          #  creator_uri += "/#{id}" if params[:add_uri]
-          #  ds.add_feature_metadata(File.join(ds.uri, "feature", id.to_s),{DC.creator => creator_uri})
-          #  ds.add_feature_metadata(File.join(ds.uri, "feature", id.to_s),{OT.hasSource => params[:dataset_uri]})
-          #}
-
-
           features = []
           pc_descriptors = YAML::load_file($keysfile)
           master[0].each_with_index { |f,idx|
@@ -113,6 +145,7 @@ module OpenTox
                 RDF::DC.description => description
               }
               features << feature
+              feature.put
             end
           }
           feature_dataset.features = features
