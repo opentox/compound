@@ -131,7 +131,7 @@ module OpenTox
             master = CSV::parse(File.open(csvfile, "rb").read)
             $logger.debug "CDK: #{master[0].size-1} entries"
             master[0][0] = "InChI"
-            master[1][0] = @inchi
+            master[1][0] = "\"#{@inchi}\""
             master[1].collect! { |x| x.to_s == "null" ? nil : x }
             ids_multiplied = master[0].to_a.collect { |x| x.gsub(/-.*/,"") }
             ids_multiplied.shift # remove ID
@@ -172,7 +172,7 @@ module OpenTox
             infile.puts sdf_string
             infile.flush
             joelib_class.new(infile.path, outfile_path) # runs joelib
-            row = [ @inchi ]
+            row = [ "\"#{@inchi}\"" ]
             ids.each do |k| # Fill row
               re = Regexp.new(k)
               open(outfile_path) do |f|
@@ -230,7 +230,7 @@ module OpenTox
             obmol = OpenBabel::OBMol.new
             obconversion = OpenBabel::OBConversion.new
             obconversion.set_in_and_out_formats 'inchi', 'can'
-            row = [ @inchi ]
+            row = [ "\"#{@inchi}\"" ]
             obconversion.read_string(obmol, @inchi)
             ids.each { |name|
               if obmol.respond_to?(name.underscore)
