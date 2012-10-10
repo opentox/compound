@@ -60,13 +60,13 @@ module OpenTox
     #   curl -H "Accept:text/plain" http://webservices.in-silico.ch/compound/InChI=1S/C6H6/c1-2-4-6-5-3-1/h1-6H
     # @return [chemical/x-daylight-smiles, chemical/x-inchi, chemical/x-mdl-sdfile, chemical/x-mdl-molfile, text/plain, image/gif, image/png] Compound representation
     get %r{/compound/(.+)} do |inchi| # catches all remaining get requests
+      pass if inchi =~ /.*\/pc/ # AM: pass on to PC descriptor calculation
       bad_request_error "Unsupported MIME type '#{@accept}.", uri unless FORMATS.keys.include? @accept
       return @inchi if @accept == "chemical/x-inchi"
       obconversion @inchi, "inchi", FORMATS[@accept]
     end
 
     
-
     # Create a new compound URI (compounds are not saved at the compound service)
     # @param [HEADER] Content-type one of `chemical/x-daylight-smiles, chemical/x-inchi, chemical/x-mdl-sdfile, chemical/x-mdl-molfile, text/plain`
     # @example Create compound from Smiles string
@@ -82,6 +82,8 @@ module OpenTox
       to(File.join("compound",obconversion(@body, FORMATS[@content_type], "inchi")))
     end
 
+
+    # AM: Calling the service by itself not working (blocks)
     #post '/compound/foo' do
     #  inchi="InChI=1S/C6H6/c1-2-4-6-5-3-1/h1-6H"
     #  $logger.debug inchi

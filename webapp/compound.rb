@@ -10,58 +10,41 @@ module OpenTox
 
     ## Get a list of descriptor calculation algorithms
     ## @return [text/uri-list] URIs
-    get '/compound/*/pc' do
+    get %r{/compound/(.*)/pc} do
       inchi=params["captures"][0]
-      algorithms = YAML::load_file File.join(ENV['HOME'], ".opentox", "config", "pc_descriptors.yaml")
-      list = (algorithms.keys.sort << "AllDescriptors").collect { |name| url_for("/compound/#{inchi}/pc/#{name}",:full) }.join("\n") + "\n"
-      format_output(list)
-    end
-
-
-    # Get representation of Descriptor Calculation Algorithm
-    # @return [String] Representation
-    get '/compound/*/pc/*' do
-      inchi=params["captures"][0]
-      params[:descriptor]=params["captures"][1]
       descriptors = YAML::load_file File.join(ENV['HOME'], ".opentox", "config", "pc_descriptors.yaml")
       alg_params = [
         { DC.description => "Dataset URI",
           OT.paramScope => "mandatory",
           DC.title => "dataset_uri" }
       ]
-      if params[:descriptor] != "AllDescriptors"
-        descriptors = descriptors[params[:descriptor]]
-      else
-        alg_params << {
-          DC.description => "Physico-chemical type, one or more of '#{descriptors.collect { |id, info| info[:pc_type] }.uniq.sort.join(",")}'",
-          OT.paramScope => "optional", DC.title => "pc_type"
-        }
-        alg_params << {
-          DC.description => "Software Library, one or more of '#{descriptors.collect { |id, info| info[:lib] }.uniq.sort.join(",")}'",
-          OT.paramScope => "optional", DC.title => "lib"
-        }
-        descriptors = {:id => "AllDescriptors", :name => "All PC descriptors" } # Comes from pc_descriptors.yaml for single descriptors
-      end
-  
-      if descriptors
-        # Contents
-        algorithm = OpenTox::Algorithm.new(url_for("/compound/#{inchi}/pc/#{params[:descriptor]}",:full))
-        mmdata = {
-          DC.title => params[:descriptor],
-          DC.creator => "andreas@maunz.de",
-          DC.description => descriptors[:name],
-          RDF.type => [OTA.DescriptorCalculation],
-        }
-        mmdata[DC.description] << (", pc_type: " + descriptors[:pc_type]) unless descriptors[:id] == "AllDescriptors"
-        mmdata[DC.description] << (", lib: " + descriptors[:lib])         unless descriptors[:id] == "AllDescriptors"
-        algorithm.metadata=mmdata
-        algorithm.parameters = alg_params
-        format_output(algorithm)
-      else
-        resource_not_found_error "Unknown descriptor #{params[:descriptor]}."
-      end
+      alg_params << {
+        DC.description => "Physico-chemical type, one or more of '#{descriptors.collect { |id, info| info[:pc_type] }.uniq.sort.join(",")}'",
+        OT.paramScope => "optional", 
+        DC.title => "pc_type"
+      }
+      alg_params << {
+        DC.description => "Software Library, one or more of '#{descriptors.collect { |id, info| info[:lib] }.uniq.sort.join(",")}'",
+        OT.paramScope => "optional", 
+        DC.title => "lib"
+      }
+      alg_params << {
+        DC.description => "Descriptor, one of '#{descriptors.keys.sort.join(",")}'. Takes precedence over pc_type, lib.",
+        OT.paramScope => "optional", 
+        DC.title => "descriptor"
+      }
+      # Contents
+      algorithm = OpenTox::Algorithm.new(url_for("/compound/#{inchi}/pc",:full))
+      mmdata = {
+        DC.title => "pc",
+        DC.creator => "andreas@maunz.de",
+        DC.description => "PC descriptor calculation",
+        RDF.type => [OTA.DescriptorCalculation],
+      }
+      algorithm.metadata=mmdata
+      algorithm.parameters = alg_params
+      format_output(algorithm)
     end
-
 
 
 
@@ -145,7 +128,7 @@ module OpenTox
                 feature = OpenTox::Feature.new feature_uri, @subjectid
                 feature.title = f.to_s
                 feature.metadata = {
-                  RDF.type => [RDF::OT.Feature],
+                  RDF.type => [RDF::OT.Feature, RDF::OT.NumericFeature],
                   RDF::DC.creator => creator_uri,
                   RDF::DC.description => description
                 }
