@@ -117,25 +117,12 @@ module OpenTox
                 end
               end
 
-              # Creator URI
-              creator_uri = File.join url_for("/compound/#{inchi}/pc",:full), f
-              
               # Search feature by title
-              feature_uri = nil
-              sparql = "SELECT DISTINCT ?feature WHERE { ?feature <#{RDF.type}> <#{RDF::OT['feature'.capitalize]}>. ?feature <#{RDF::DC.title}> '#{f.to_s}' }"
-              feature_uri = OpenTox::Backend::FourStore.query(sparql,"text/uri-list").split("\n").first # is nil for non-existing feature
-              unless feature_uri
-                feature = OpenTox::Feature.new feature_uri, @subjectid
-                feature.title = f.to_s
-                feature.metadata = {
+              metadata = {
                   RDF.type => [RDF::OT.Feature, RDF::OT.NumericFeature],
-                  RDF::DC.creator => creator_uri,
                   RDF::DC.description => description
                 }
-                feature.put
-              else
-                feature = OpenTox::Feature.find(feature_uri, @subjectid)
-              end
+              feature = OpenTox::Feature.find_by_title(f.to_s, metadata)
               features << feature
             end
           }
