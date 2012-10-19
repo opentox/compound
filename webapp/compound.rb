@@ -71,12 +71,12 @@ module OpenTox
       descriptor = params[:descriptor].nil? ? "" : params[:descriptor]
       lib = params[:lib].nil? ? "" : params[:lib]
       pc_type = params[:pc_type].nil? ? "" : params[:pc_type]
-      pcdf = OpenTox::Compound::PcDescriptorFactory.new(params)
-      master, cdk_ids, ob_ids, jl_ids, cdk_single_ids = pcdf.calculate
-      #$logger.debug cdk_ids.to_yaml
-      #cdk_single_ids.collect { |x| $logger.debug x }
-      #$logger.debug cdk_single_ids.to_yaml
       begin 
+        pcdf = OpenTox::Compound::PcDescriptorFactory.new(params)
+        master, cdk_ids, ob_ids, jl_ids, cdk_single_ids = pcdf.calculate
+        #logger.debug cdk_ids.to_yaml
+        #cdk_single_ids.collect { |x| $logger.debug x }
+        #$logger.debug cdk_single_ids.to_yaml
         if master
           feature_dataset = OpenTox::Dataset.new(nil, @subjectid)
           feature_dataset.metadata = {
