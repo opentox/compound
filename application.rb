@@ -2,6 +2,8 @@
 # Loads libraries and webapps
 # Author: Christoph Helma, Andreas Maunz
 
+require 'sinatra/url_for'
+
 # Library code
 $logger.debug "Compound booting: #{$compound.collect{|k,v| "#{k}: '#{v}'"} }"
 Dir['./lib/utils/shims/*.rb'].each { |f| require f } # Shims for legacy code
