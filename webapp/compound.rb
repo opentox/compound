@@ -1,6 +1,11 @@
-# compound.rb
-# OpenTox Compound
-# Author: Andreas Maunz
+=begin
+  * Name: compound.rb
+  * Description: Compound
+  * Author: Andreas Maunz <andreas@maunz.de>
+  * Date: 10/2012
+  * License: BSD
+=end
+
 
 module OpenTox
 

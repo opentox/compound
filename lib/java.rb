@@ -1,6 +1,9 @@
-# Contains Java settings.
-# # Joelib runs on Java.
-# # Author: Andreas Maunz, 2012
+=begin
+* Name: java.rb
+* Description: Java settings
+* Author: Andreas Maunz <andreas@maunz.de>
+* Date: 10/2012
+=end
 
 java_dir = File.join File.expand_path(File.dirname(__FILE__)),"../java"
 dirs = jars = []

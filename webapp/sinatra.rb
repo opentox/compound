@@ -1,6 +1,10 @@
-# sinatra.rb
-# Common service
-# Author: Andreas Maunz
+=begin
+  * Name: sinatra.rb
+  * Description: Common service
+  * Author: Andreas Maunz <andreas@maunz.de>
+  * Date: 10/2012
+  * License: BSD
+=end
 
 module OpenTox
   class Application < Service

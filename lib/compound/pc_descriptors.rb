@@ -1,3 +1,10 @@
+=begin
+* Name: pc_descriptors.rb
+* Description: Calculation of pc descriptors
+* Author: Andreas Maunz <andreas@maunz.de>
+* Date: 10/2012
+=end
+
 require 'csv'
 
 module OpenTox
