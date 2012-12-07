@@ -63,9 +63,17 @@ module OpenTox
     # @return [chemical/x-daylight-smiles, chemical/x-inchi, chemical/x-mdl-sdfile, chemical/x-mdl-molfile, text/plain, image/gif, image/png] Compound representation
     get %r{/compound/(.+)} do |inchi| # catches all remaining get requests
       pass if inchi =~ /.*\/pc/ # AM: pass on to PC descriptor calculation
-      bad_request_error "Unsupported MIME type '#{@accept}.", uri unless FORMATS.keys.include? @accept
-      return @inchi if @accept == "chemical/x-inchi"
-      obconversion @inchi, "inchi", FORMATS[@accept]
+      if @accept=~/html/
+        text = "URI:\t#{uri}\n"
+        text << "Inchi:\t#{@inchi}\n"
+        text << "SMILES:\t#{obconversion(@inchi, "inchi", "can")}\n"
+        text << "sdf:\t#{obconversion(@inchi, "inchi", "sdf")}\n"
+        OpenTox.text_to_html(text,nil,nil,nil,nil,obconversion(@inchi,"inchi","png"))
+      else
+        bad_request_error "Unsupported MIME type '#{@accept}.", uri unless FORMATS.keys.include? @accept
+        return @inchi if @accept == "chemical/x-inchi"
+        obconversion @inchi, "inchi", FORMATS[@accept]
+      end
     end
 
     
