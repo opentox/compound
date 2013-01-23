@@ -17,7 +17,7 @@ module OpenTox
     ## @return [text/uri-list] URIs
     get %r{/compound/(.*)/pc} do
       inchi=params["captures"][0]
-      descriptors = YAML::load_file File.join(ENV['HOME'], ".opentox", "config", "pc_descriptors.yaml")
+      descriptors = YAML::load_file $keysfile
       alg_params = [
         { DC.description => "Dataset URI",
           OT.paramScope => "mandatory",
@@ -39,7 +39,7 @@ module OpenTox
         DC.title => "descriptor"
       }
       # Contents
-      algorithm = OpenTox::Algorithm.new(url_for("/compound/#{inchi}/pc",:full))
+      algorithm = OpenTox::Algorithm.new(to("/compound/#{inchi}/pc",:full))
       mmdata = {
         DC.title => "pc",
         DC.creator => "andreas@maunz.de",
@@ -76,70 +76,66 @@ module OpenTox
       descriptor = params[:descriptor].nil? ? "" : params[:descriptor]
       lib = params[:lib].nil? ? "" : params[:lib]
       pc_type = params[:pc_type].nil? ? "" : params[:pc_type]
-      begin 
-        pcdf = OpenTox::Compound::PcDescriptorFactory.new(params)
-        master, cdk_ids, ob_ids, jl_ids, cdk_single_ids = pcdf.calculate
-        #logger.debug cdk_ids.to_yaml
-        #cdk_single_ids.collect { |x| $logger.debug x }
-        #$logger.debug cdk_single_ids.to_yaml
-        if master
-          feature_dataset = OpenTox::Dataset.new(nil, @subjectid)
-          feature_dataset.metadata = {
-            RDF::DC.title => "Physico-chemical descriptors",
-            RDF::DC.creator => url_for("/compound/#{inchi}/pc",:full),
-            RDF::OT.hasSource => url_for("/compound/#{inchi}/pc", :full),
-          }
-          feature_dataset.parameters = [
-              { RDF::DC.title => "compound_uri", RDF::OT.paramValue => params[:compound] },
-              { RDF::DC.title => "descriptor", RDF::OT.paramValue => descriptor },
-              { RDF::DC.title => "lib", RDF::OT.paramValue => lib },
-              { RDF::DC.title => "pc_type", RDF::OT.paramValue => pc_type},
-          ]
 
-          features = []
-          pc_descriptors = YAML::load_file($keysfile)
-          master[0].each_with_index { |f,idx|
-            if (idx != 0)
+      pcdf = OpenTox::Compound::PcDescriptorFactory.new(params)
+      master, cdk_ids, ob_ids, jl_ids, cdk_single_ids = pcdf.calculate
+      #logger.debug cdk_ids.to_yaml
+      #cdk_single_ids.collect { |x| $logger.debug x }
+      #$logger.debug cdk_single_ids.to_yaml
+      if master
+        feature_dataset = OpenTox::Dataset.new(nil, @subjectid)
+        feature_dataset.metadata = {
+          RDF::DC.title => "Physico-chemical descriptors",
+          RDF::DC.creator => to("/compound/#{inchi}/pc",:full),
+          RDF::OT.hasSource => to("/compound/#{inchi}/pc", :full),
+        }
+        feature_dataset.parameters = [
+            { RDF::DC.title => "compound_uri", RDF::OT.paramValue => params[:compound] },
+            { RDF::DC.title => "descriptor", RDF::OT.paramValue => descriptor },
+            { RDF::DC.title => "lib", RDF::OT.paramValue => lib },
+            { RDF::DC.title => "pc_type", RDF::OT.paramValue => pc_type},
+        ]
 
-              # Description
-              description = ""
-              descriptor_name = ""
-              if cdk_single_ids # we have used CDK
-                idx = cdk_single_ids.index(f)
-                cdk_id = cdk_ids[idx] if idx
-              end
-              if cdk_id
-                #$logger.debug "#{f} in CDK: #{pc_descriptors[cdk_id][:name]}"
-                descriptor_name = pc_descriptors[cdk_id][:name]
-                description = "#{descriptor_name} [#{pc_descriptors[cdk_id][:pc_type]}, #{pc_descriptors[cdk_id][:lib]}]" 
-              else
-                #$logger.debug "#{f} not in CDK"
-                if pc_descriptors[f]
-                  descriptor_name = pc_descriptors[f][:name]
-                  description = "#{descriptor_name} [#{pc_descriptors[f][:pc_type]}, #{pc_descriptors[f][:lib]}]"
-                else
-                  internal_server_error "PC feature '#{f}' not found"
-                end
-              end
+        features = []
+        pc_descriptors = YAML::load_file($keysfile)
+        master[0].each_with_index { |f,idx|
+          if (idx != 0)
 
-              # Search feature by title
-              metadata = {
-                  RDF.type => [RDF::OT.Feature, RDF::OT.NumericFeature],
-                  RDF::DC.description => description
-                }
-              feature = OpenTox::Feature.find_by_title(f.to_s, metadata)
-              features << feature
+            # Description
+            description = ""
+            descriptor_name = ""
+            if cdk_single_ids # we have used CDK
+              idx = cdk_single_ids.index(f)
+              cdk_id = cdk_ids[idx] if idx
             end
-          }
-          feature_dataset.features = features
-          master[1][0] = OpenTox::Compound.new(params[:compound], @subjectid) 
-          feature_dataset << master[1].to_a
-          format_output(feature_dataset)
-          
-        end
-      rescue => e
-        $logger.debug "#{e.class}: #{e.message}"
-        $logger.debug "Backtrace:\n\t#{e.backtrace.join("\n\t")}"
+            if cdk_id
+              #$logger.debug "#{f} in CDK: #{pc_descriptors[cdk_id][:name]}"
+              descriptor_name = pc_descriptors[cdk_id][:name]
+              description = "#{descriptor_name} [#{pc_descriptors[cdk_id][:pc_type]}, #{pc_descriptors[cdk_id][:lib]}]" 
+            else
+              #$logger.debug "#{f} not in CDK"
+              if pc_descriptors[f]
+                descriptor_name = pc_descriptors[f][:name]
+                description = "#{descriptor_name} [#{pc_descriptors[f][:pc_type]}, #{pc_descriptors[f][:lib]}]"
+              else
+                internal_server_error "PC feature '#{f}' not found"
+              end
+            end
+
+            # Search feature by title
+            metadata = {
+                RDF.type => [RDF::OT.Feature, RDF::OT.NumericFeature],
+                RDF::DC.description => description
+              }
+            feature = OpenTox::Feature.find_by_title(f.to_s, metadata)
+            features << feature
+          end
+        }
+        feature_dataset.features = features
+        master[1][0] = OpenTox::Compound.new(params[:compound], @subjectid) 
+        feature_dataset << master[1].to_a
+        format_output(feature_dataset)
+        
       end
 
     end

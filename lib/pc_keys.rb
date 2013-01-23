@@ -5,4 +5,5 @@
 * Date: 10/2012
 =end
 
-$keysfile = File.join(ENV['HOME'], ".opentox", "config", "pc_descriptors.yaml")
+$keysfile = File.join(File.dirname(__FILE__),"..","public", "pc_descriptors.yaml")
+#$keysfile = File.join(ENV['HOME'], ".opentox", "config", "pc_descriptors.yaml")

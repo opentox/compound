@@ -2,8 +2,6 @@
 # Loads libraries and webapps
 # Author: Christoph Helma, Andreas Maunz
 
-require 'sinatra/url_for'
-
 # Library code
 $logger.debug "Compound booting: #{$compound.collect{|k,v| "#{k}: '#{v}'"} }"
 Dir['./lib/utils/shims/*.rb'].each { |f| require f } # Shims for legacy code
@@ -48,6 +46,10 @@ module OpenTox
 
     get "/compound/?" do
       not_implemented_error "Object listing not implemented, because compounds are not stored at the server.", to("/compound")
+    end
+
+    get '/compound/pc_descriptors.yaml' do
+      send_file File.join(File.dirname(__FILE__),"public","pc_descriptors.yaml")
     end
 
     get %r{/compound/(.+)/image} do |inchi| # catches all remaining get requests

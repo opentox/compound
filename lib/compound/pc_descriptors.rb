@@ -73,27 +73,22 @@ module OpenTox
     class PcDescriptors
       # @param[Hash] params required keys: :inchi optional keys: :descriptor, :lib, :pc_type
       def initialize(params)
-        begin
-          @inchi = params[:inchi]
-          @smiles = params[:smiles]
-          @lib = params[:lib].split(',') if params[:lib]
-          @pc_type = params[:pc_type].split(',') if params[:pc_type]
-          @descriptor = params[:descriptor]
-          @compound = params[:compound]
-          # Does not work here: OpenTox::RestClientWrapper.post($compound[:uri],inchi,{:content_type => 'chemical/x-inchi'})
-          # Does not work here: OpenTox::Compound.from_inchi($compound[:uri],inchi)
-          # Java start
-          Rjb.load(nil,["-Xmx128m"]) # start vm
-          jSystem = Rjb::import('java.lang.System')
-          jPrintStream = Rjb::import('java.io.PrintStream')
-          jFile = Rjb::import('java.io.File')
-          p = jPrintStream.new(jFile.new('java_debug.txt'))
-          jSystem.setOut(p)
-          jSystem.setErr(p)
-        rescue => e
-          $logger.debug "#{e.class}: #{e.message}"
-          $logger.debug "Backtrace:\n\t#{e.backtrace.join("\n\t")}"
-        end
+        @inchi = params[:inchi]
+        @smiles = params[:smiles]
+        @lib = params[:lib].split(',') if params[:lib]
+        @pc_type = params[:pc_type].split(',') if params[:pc_type]
+        @descriptor = params[:descriptor]
+        @compound = params[:compound]
+        # Does not work here: OpenTox::RestClientWrapper.post($compound[:uri],inchi,{:content_type => 'chemical/x-inchi'})
+        # Does not work here: OpenTox::Compound.from_inchi($compound[:uri],inchi)
+        # Java start
+        Rjb.load(nil,["-Xmx128m"]) # start vm
+        jSystem = Rjb::import('java.lang.System')
+        jPrintStream = Rjb::import('java.io.PrintStream')
+        jFile = Rjb::import('java.io.File')
+        p = jPrintStream.new(jFile.new('java_debug.txt'))
+        jSystem.setOut(p)
+        jSystem.setErr(p)
       end
     end
 
@@ -143,9 +138,9 @@ module OpenTox
             ids_multiplied = master[0].to_a.collect { |x| x.gsub(/-.*/,"") }
             ids_multiplied.shift # remove ID
           end
-        rescue Exception => e
-          $logger.debug "#{e.class}: #{e.message}"
-          $logger.debug "Backtrace:\n\t#{e.backtrace.join("\n\t")}"
+        #rescue Exception => e
+          #$logger.debug "#{e.class}: #{e.message}"
+          #$logger.debug "Backtrace:\n\t#{e.backtrace.join("\n\t")}"
         ensure
           [ csvfile ].each { |f| File.delete(f) } if csvfile
         end
@@ -204,16 +199,12 @@ module OpenTox
             csvfile.flush
             master = CSV::parse(File.open(csvfile.path, "rb").read)
           end
-        rescue Exception => e
-          $logger.debug "#{e.class}: #{e.message}"
-          $logger.debug "Backtrace:\n\t#{e.backtrace.join("\n\t")}"
+        #rescue Exception => e
+          #$logger.debug "#{e.class}: #{e.message}"
+          #$logger.debug "Backtrace:\n\t#{e.backtrace.join("\n\t")}"
         ensure
-          if infile
-            File.delete(infile.path.gsub(/\.sdf/,".numeric.sdf")) 
-          end
-          if outfile_path
-            File.delete(outfile_path) if outfile_path
-          end
+          File.delete(infile.path.gsub(/\.sdf/,".numeric.sdf")) if infile
+          File.delete(outfile_path) if outfile_path if outfile_path
         end
         [ master, ids ]
       end
@@ -263,13 +254,11 @@ module OpenTox
             csvfile.flush
             master = CSV::parse(File.open(csvfile.path, "rb").read)
           end
-        rescue Exception => e
-          $logger.debug "#{e.class}: #{e.message}"
-          $logger.debug "Backtrace:\n\t#{e.backtrace.join("\n\t")}"
+        #rescue Exception => e
+          #$logger.debug "#{e.class}: #{e.message}"
+          #$logger.debug "Backtrace:\n\t#{e.backtrace.join("\n\t")}"
         ensure
-          if csvfile
-            csvfile.close!
-          end
+          csvfile.close!  if csvfile
         end
         [ master, ids ]
       end
