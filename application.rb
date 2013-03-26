@@ -1,16 +1,9 @@
 # application.rb
-# Loads libraries and webapps
 # Author: Christoph Helma, Andreas Maunz
+require 'openbabel'
 
-# Library code
 $logger.debug "Compound booting: #{$compound.collect{|k,v| "#{k}: '#{v}'"} }"
-Dir['./lib/utils/shims/*.rb'].each { |f| require f } # Shims for legacy code
-Dir['./lib/utils/*.rb'].each { |f| require f } # Utils for Libs
-Dir['./lib/compound/*.rb'].each { |f| require f } # Libs
-Dir['./lib/*.rb'].each { |f| require f } # Libs
-Dir['./webapp/*.rb'].each { |f| require f } # Webapps
 
-# Entry point
 module OpenTox
   class Application < Service
 
@@ -70,7 +63,7 @@ module OpenTox
         text << "Inchi:\t#{@inchi}\n"
         text << "SMILES:\t#{obconversion(@inchi, "inchi", "can")}\n"
         text << "sdf:\t#{obconversion(@inchi, "inchi", "sdf")}\n"
-        OpenTox.text_to_html(text,nil,nil,nil,nil,obconversion(@inchi,"inchi","png"))
+        text.to_html(nil,nil,obconversion(@inchi,"inchi","png"))
       else
         bad_request_error "Unsupported MIME type '#{@accept}.", uri unless FORMATS.keys.include? @accept
         return @inchi if @accept == "chemical/x-inchi"
@@ -93,14 +86,6 @@ module OpenTox
       return to(File.join("/compound",@body)) if @content_type == "chemical/x-inchi"
       to(File.join("compound",obconversion(@body, FORMATS[@content_type], "inchi")))
     end
-
-
-    # AM: Calling the service by itself not working (blocks)
-    #post '/compound/foo' do
-    #  inchi="InChI=1S/C6H6/c1-2-4-6-5-3-1/h1-6H"
-    #  $logger.debug inchi
-    #  OpenTox::Compound.from_inchi($compound[:uri],inchi)
-    #end
 
   end
 end
