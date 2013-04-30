@@ -37,10 +37,6 @@ module OpenTox
       @inchi = URI.unescape request.env['REQUEST_URI'].sub(/^\//,'').sub(/.*compound\//,'').sub(/\/smarts.*$/,'').sub(/\/image/,'').sub(/\?.*$/,'') # hack to avoid sinatra's URI/CGI unescaping, splitting, ..."
     end
 
-    # for service check
-    head "/compound/?" do
-    end
-
     get "/compound/?" do
       "Object listing not implemented, because compounds are not stored at the server.".to_html
       #not_implemented_error "Object listing not implemented, because compounds are not stored at the server.", to("/compound")
