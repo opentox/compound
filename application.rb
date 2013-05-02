@@ -39,7 +39,7 @@ module OpenTox
     
     # for service check
     head "/compound/?" do
-      $logger.debug "Compound service is running."
+      #$logger.debug "Compound service is running."
     end
 
     get "/compound/?" do
