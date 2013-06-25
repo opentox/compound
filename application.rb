@@ -39,12 +39,11 @@ module OpenTox
     
     # for service check
     head "/compound/?" do
-      #$logger.debug "Compound service is running."
     end
 
     get "/compound/?" do
-      "Object listing not implemented, because compounds are not stored at the server.".to_html
-      #not_implemented_error "Object listing not implemented, because compounds are not stored at the server.", to("/compound")
+      #"Object listing not implemented, because compounds are not stored at the server.".to_html
+      not_implemented_error "Object listing not implemented, because compounds are not stored at the server.", to("/compound")
     end
 
     get '/compound/pc_descriptors.yaml' do
