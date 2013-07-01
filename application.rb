@@ -11,7 +11,7 @@ module OpenTox
       "chemical/x-daylight-smiles" => "smi",
       "chemical/x-inchi" => "inchi",
       #"chemical/x-inchikey" => "inchikey",
-      # OpenBabel segfaults randomly durng inchikey calculation
+      # OpenBabel segfaults randomly during inchikey calculation
       "chemical/x-mdl-sdfile" => "sdf",
       "chemical/x-mdl-molfile" => "sdf",
       "image/png" => 'png',
@@ -50,7 +50,8 @@ module OpenTox
       send_file File.join(File.dirname(__FILE__),"public","pc_descriptors.yaml")
     end
 
-    get %r{/compound/(.+)/image} do |inchi| # catches all remaining get requests
+    get %r{/compound/(.+)/image} do |inchi|
+      response['Content-Type'] = 'image/png' # donut who removes
       obconversion @inchi, "inchi", "png"
     end
 
@@ -60,7 +61,7 @@ module OpenTox
     #   curl http://webservices.in-silico.ch/compound/InChI=1S/C6H6/c1-2-4-6-5-3-1/h1-6H
     # @example Get all known names 
     #   curl -H "Accept:text/plain" http://webservices.in-silico.ch/compound/InChI=1S/C6H6/c1-2-4-6-5-3-1/h1-6H
-    # @return [chemical/x-daylight-smiles, chemical/x-inchi, chemical/x-mdl-sdfile, chemical/x-mdl-molfile, text/plain, image/gif, image/png] Compound representation
+    # @return [chemical/x-daylight-smiles, chemical/x-inchi, chemical/x-mdl-sdfile, chemical/x-mdl-molfile, text/plain, image/png] Compound representation
     get %r{/compound/(.+)} do |inchi| # catches all remaining get requests
       pass if inchi =~ /.*\/pc/ # AM: pass on to PC descriptor calculation
       if @accept=~/html/
