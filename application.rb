@@ -52,6 +52,7 @@ module OpenTox
     end
 
     get %r{/compound/(.+)/image} do |inchi| # catches all remaining get requests
+      response['Content-Type'] = 'image/png'
       obconversion @inchi, "inchi", "png"
     end
 
