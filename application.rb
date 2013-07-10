@@ -14,7 +14,7 @@ module OpenTox
       # OpenBabel segfaults randomly durng inchikey calculation
       "chemical/x-mdl-sdfile" => "sdf",
       "chemical/x-mdl-molfile" => "sdf",
-      "image/png" => 'png',
+      "image/png" => '_png2',
     }
 
     helpers do
@@ -51,7 +51,7 @@ module OpenTox
     end
 
     get %r{/compound/(.+)/image} do |inchi| # catches all remaining get requests
-      obconversion @inchi, "inchi", "png"
+      obconversion @inchi, "inchi", "_png2"
     end
 
     # Get compound representation
@@ -68,7 +68,7 @@ module OpenTox
         text << "Inchi:\t#{@inchi}\n"
         text << "SMILES:\t#{obconversion(@inchi, "inchi", "can")}\n"
         text << "sdf:\t#{obconversion(@inchi, "inchi", "sdf")}\n"
-        text.to_html(nil,nil,obconversion(@inchi,"inchi","png"))
+        text.to_html(nil,nil,obconversion(@inchi,"inchi","_png2"))
       else
         bad_request_error "Unsupported MIME type '#{@accept}.", uri unless FORMATS.keys.include? @accept
         return @inchi if @accept == "chemical/x-inchi"
