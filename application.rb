@@ -19,8 +19,9 @@ module OpenTox
 
     helpers do
       # Convert identifier from OpenBabel input_format to OpenBabel output_format
-      def obconversion(identifier,input_format,output_format)
+      def obconversion(identifier,input_format,output_format,option=nil)
         obconversion = OpenBabel::OBConversion.new
+        obconversion.set_options(option, OpenBabel::OBConversion::OUTOPTIONS) if option
         obmol = OpenBabel::OBMol.new
         obconversion.set_in_and_out_formats input_format, output_format
         obconversion.read_string obmol, identifier
@@ -52,7 +53,7 @@ module OpenTox
 
     get %r{/compound/(.+)/image} do |inchi| # catches all remaining get requests
       response['Content-Type'] = 'image/png'
-      obconversion @inchi, "inchi", "_png2"
+      obconversion @inchi, "inchi", "_png2", (params["size"] ? 'p"'+params["size"]+'"' : nil)
     end
 
     # Get compound representation
@@ -73,7 +74,7 @@ module OpenTox
       else
         bad_request_error "Unsupported MIME type '#{@accept}.", uri unless FORMATS.keys.include? @accept
         return @inchi if @accept == "chemical/x-inchi"
-        obconversion @inchi, "inchi", FORMATS[@accept]
+        obconversion @inchi, "inchi", FORMATS[@accept], (params["size"] ? 'p"'+params["size"]+'"' : nil)
       end
     end
 
