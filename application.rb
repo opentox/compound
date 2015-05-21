@@ -47,23 +47,22 @@ module OpenTox
       not_implemented_error "Object listing not implemented, because compounds are not stored at the server.", to("/compound")
     end
 
-    get '/compound/pc_descriptors.yaml' do
-      send_file File.join(File.dirname(__FILE__),"public","pc_descriptors.yaml")
-    end
-
     get %r{/compound/(.+)/image} do |inchi| # catches all remaining get requests
       response['Content-Type'] = 'image/png'
       obconversion @inchi, "inchi", "_png2", (params["size"] ? 'p"'+params["size"]+'"' : nil)
     end
 
     # Get compound representation
-    # @param [optional, HEADER] Accept one of `chemical/x-daylight-smiles, chemical/x-inchi, chemical/x-mdl-sdfile, chemical/x-mdl-molfile, text/plain, image/gif, image/png`, defaults to chemical/x-daylight-smiles
+    # @method get_compound_inchi
+    # @overload get /compound/:id
+    # @param header [Hash] header values
+    #   * Accept [String] <chemical/x-daylight-smiles, chemical/x-inchi, chemical/x-mdl-sdfile, chemical/x-mdl-molfile, image/png, text/html> 
+    # @return [String] <chemical/x-daylight-smiles, chemical/x-inchi, chemical/x-mdl-sdfile, chemical/x-mdl-molfile, image/png, text/html> Compound representation
     # @example Get smiles
     #   curl http://webservices.in-silico.ch/compound/InChI=1S/C6H6/c1-2-4-6-5-3-1/h1-6H
     # @example Get all known names 
     #   curl -H "Accept:text/plain" http://webservices.in-silico.ch/compound/InChI=1S/C6H6/c1-2-4-6-5-3-1/h1-6H
-    # @return [chemical/x-daylight-smiles, chemical/x-inchi, chemical/x-mdl-sdfile, chemical/x-mdl-molfile, text/plain, image/png] Compound representation
-    get %r{/compound/(.+)} do |inchi| # catches all remaining get requests
+    get %r{/compound/(?!api)(.+)} do |inchi| # catches all remaining get requests
       pass if inchi =~ /.*\/pc/ # AM: pass on to PC descriptor calculation
       if @accept=~/html/
         text = "URI:\t#{uri}\n"
@@ -80,13 +79,16 @@ module OpenTox
 
     
     # Create a new compound URI (compounds are not saved at the compound service)
-    # @param [HEADER] Content-type one of `chemical/x-daylight-smiles, chemical/x-inchi, chemical/x-mdl-sdfile, chemical/x-mdl-molfile, text/plain`
+    # @method post_compound
+    # @overload post /compound
+    # @param header [Hash] header values
+    #   * Content-Type [String] one of <chemical/x-daylight-smiles, chemical/x-inchi, chemical/x-mdl-sdfile, chemical/x-mdl-molfile>
     # @example Create compound from Smiles string
     #   curl -X POST -H "Content-type:chemical/x-daylight-smiles" --data "c1ccccc1" http://webservices.in-silico.ch/compound
     # @example Create compound from name, uses an external lookup service and should work also with trade names, CAS numbers, ...
     #   curl -X POST -H "Content-type:text/plain" --data "Benzene" http://webservices.in-silico.ch/compound
     # @param [BODY] - string with identifier/data in selected Content-type
-    # @return [text/uri-list] compound URI
+    # @return [String] <text/uri-list> compound URI
     post '/compound/?' do 
       response['Content-Type'] = 'text/uri-list'
       bad_request_error "Unsupported MIME type '#{@content_type}.", uri unless FORMATS.keys.include? @content_type
