@@ -1,0 +1,93 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "version": "5.0.0pre2",
+        "title": "OpenTox Compound Service"
+    },
+    "host": "enm.in-silico.ch",
+    "schemes": [
+        "https"
+    ],
+    "paths": {
+        "/compound": {
+            "head": {
+                "description": "for checks service",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "503": {
+                        "description": "Service Unavailable"
+                    }
+                }
+            }
+        },
+        "/compound/{InChI}": {
+            "get": {
+                "description": "Get compound representation",
+                "parameters": [
+                    {
+                        "name": "InChI",
+                        "in": "path",
+                        "description": "InChI String",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "name": "accept",
+                        "in": "header",
+                        "description": "requested Content-type",
+                        "required": true,
+                        "type": "string",
+                        "enum": [
+                            "chemical/x-daylight-smiles",
+                            "chemical/x-inchi",
+                            "chemical/x-mdl-sdfile",
+                            "chemical/x-mdl-molfile",
+                            "image/png",
+                            "text/html"
+                        ]
+                    }
+                ],
+                "produces": [
+                    "chemical/x-daylight-smiles",
+                    "chemical/x-inchi",
+                    "chemical/x-mdl-sdfile",
+                    "chemical/x-mdl-molfile",
+                    "image/png",
+                    "text/html"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                }
+            }
+        },
+        "/compound/{InChI}/image": {
+            "get": {
+                "description": "Get compound representation",
+                "parameters": [
+                    {
+                        "name": "InChI",
+                        "in": "path",
+                        "description": "InChI String",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "produces": [
+                    "image/png"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        }
+    }
+}
