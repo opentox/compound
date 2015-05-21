@@ -11,7 +11,7 @@
     "paths": {
         "/compound": {
             "head": {
-                "description": "for checks service",
+                "description": "for service check",
                 "responses": {
                     "200": {
                         "description": "OK"
