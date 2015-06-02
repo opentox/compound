@@ -63,7 +63,7 @@ install_with_bundler
 [ -f $OT_CONFIG_DIR/config/$SELF.rb ] || touch $OT_CONFIG_DIR/config/$SELF.rb
 if ! cat "$OT_CONFIG_DIR/config/$SELF.rb" | grep "four_store">/dev/null 2>&1; then echo '$four_store = { :uri => "http://localhost:9088", :user => "", :password => "" }' >> $OT_CONFIG_DIR/config/$SELF.rb; fi
 if ! cat "$OT_CONFIG_DIR/config/$SELF.rb" | grep "aa">/dev/null 2>&1; then echo '$aa = { :uri => nil }' >> $OT_CONFIG_DIR/config/$SELF.rb; fi
-if ! cat "$OT_DEFAULT_CONF" | grep "$SELF">/dev/null 2>&1; then echo '$compound = { :uri => "http://localhost:8082/compound" }' >> $OT_DEFAULT_CONF; fi
+if ! cat "$OT_DEFAULT_CONF" | grep "$SELF">/dev/null 2>&1; then echo '$compound = { :uri => "http://localhost:8082/compound", :cors => false }' >> $OT_DEFAULT_CONF; fi
 
 if [ $SILENT = false ]; then
   notify
