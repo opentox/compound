@@ -2,7 +2,8 @@
     "swagger": "2.0",
     "info": {
         "version": "5.0.0pre2",
-        "title": "OpenTox Compound Service"
+        "title": "OpenTox Compound Service",
+        "description": "Compounds component for the OpenTox framework"
     },
     "host": "enm.in-silico.ch",
     "schemes": [
@@ -11,6 +12,9 @@
     "paths": {
         "/compound": {
             "head": {
+                "tags": [
+                    "compound"
+                ],
                 "description": "for checks service",
                 "responses": {
                     "200": {
@@ -24,6 +28,9 @@
         },
         "/compound/{InChI}": {
             "get": {
+                "tags": [
+                    "compound"
+                ],
                 "description": "Get compound representation",
                 "parameters": [
                     {
@@ -69,6 +76,9 @@
         },
         "/compound/{InChI}/image": {
             "get": {
+                "tags": [
+                    "compound"
+                ],
                 "description": "Get compound representation",
                 "parameters": [
                     {
