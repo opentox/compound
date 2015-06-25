@@ -3,7 +3,16 @@
     "info": {
         "version": "5.0.0pre2",
         "title": "OpenTox Compound Service",
-        "description": "Compounds component for the OpenTox framework"
+        "description": "Compounds component for the OpenTox framework",
+        "contact": {
+            "name": "Christoph Helma, Andreas Maunz, in silico toxicology",
+            "url": "http://www.in-silico.ch",
+            "email": "support@in-silico.ch"
+        },
+        "license": {
+            "name": "GNU GENERAL PUBLIC LICENSE",
+            "url": "https://github.com/opentox/algorithm/blob/master/LICENSE"
+        }
     },
     "host": "enm.in-silico.ch",
     "schemes": [
