@@ -18,10 +18,10 @@
                 "description": "for service check",
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "$ref": "#/responses/200"
                     },
                     "503": {
-                        "description": "Service Unavailable"
+                        "$ref": "#/responses/503"
                     }
                 }
             }
@@ -34,11 +34,7 @@
                 "description": "Get compound representation",
                 "parameters": [
                     {
-                        "name": "InChI",
-                        "in": "path",
-                        "description": "InChI String",
-                        "required": true,
-                        "type": "string"
+                        "$ref": "#/parameters/InChI"
                     },
                     {
                         "name": "accept",
@@ -82,11 +78,7 @@
                 "description": "Get compound representation",
                 "parameters": [
                     {
-                        "name": "InChI",
-                        "in": "path",
-                        "description": "InChI String",
-                        "required": true,
-                        "type": "string"
+                        "$ref": "#/parameters/InChI"
                     }
                 ],
                 "produces": [
@@ -94,10 +86,45 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "$ref": "#/responses/200"
+                    },
+                    "400": {
+                        "$ref": "#/responses/400"
+                    },
+                    "404": {
+                        "$ref": "#/responses/404"
                     }
                 }
             }
         }
-    }
+    },
+    "parameters": {
+        "InChI": {
+            "name": "InChI",
+            "in": "path",
+            "description": "InChI String",
+            "required": true,
+            "type": "string"
+        }
+    },
+    "responses": {
+        "200": {
+            "description": "OK"
+        },
+        "400": {
+            "description": "Bad Request"
+        },
+        "404": {
+            "description": "Resource Not Found"
+        },
+        "503": {
+            "description": "Service Unavailable"
+        }
+    },
+    "tags": [
+        {
+            "name": "compound",
+            "description": "Compound service"
+        }
+    ]
 }
